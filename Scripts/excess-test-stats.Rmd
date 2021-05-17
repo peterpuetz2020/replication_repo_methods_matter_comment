@@ -1,0 +1,297 @@
+---
+title: "Excess Statistics"
+output:
+  pdf_document: 
+    keep_tex: yes
+---
+
+```{r setup, include=FALSE}
+library(forcats)
+library(ggplot2)
+library(RoundingMatters)
+library(here)
+knitr::opts_chunk$set(echo = FALSE, error=TRUE, warnings = FALSE, fig.path = here("Results/",""))
+
+dat = readRDS(here("Data","MM_new.Rds"))
+options(warn=-1)
+methods = unique(dat$method)
+
+df.rep = select(dat, mu, sigma, z, num.deci,s, method, keep.obs, rct_pre_registered,registered, year) %>% mutate(type="No. adj.")
+df.omit = df.rep %>% filter(keep.obs) %>% mutate(type="Omit")
+df.unif = df.rep %>% mutate(z = deround.z.uniform(mu, sigma,num.deci)) %>% mutate(type="Uniform derounding")
+
+df.big = bind_rows(df.rep, df.omit, df.unif)
+
+z.max = 10; bw = 0.15
+
+make.excess.plot = function(type="Omit") {
+  z.min = 0; z.max = 7
+  z.seq = seq(z.min, z.max, by=0.01)
+  
+  t.dens = bind_rows(
+    tibble(method="DID", lab="DID  t(2,1.81)",z=z.seq, t.dens = dt(z.seq, 2, 1.81)),
+    tibble(method="IV",lab="IV  t(2,1.65)", z=z.seq, t.dens = dt(z.seq, 2, 1.65)),
+    tibble(method="RDD",lab="RDD  t(2,1.51)", z=z.seq, t.dens = dt(z.seq, 2, 1.51)),
+    tibble(method="RCT",lab="RCT  t(2,1.16)",z=z.seq, t.dens = dt(z.seq, 2, 1.16 )),
+  )
+  lab.df = select(t.dens, method, lab) %>% unique()
+  
+  #ggplot(t.dens, aes(x=z, y=t.dens)) + geom_line(color="blue") + facet_wrap(~method)
+  t = type
+  no.m = "ALL"
+  df.adj = filter(df.big, type==t, !method %in% no.m)    
+  df.un = filter(df.rep, !method %in% no.m)
+
+  df.adj = filter(df.adj,is.true(z>=0 & z<=z.max+1))
+  df.un = filter(df.un,is.true(z>=0 & z<=z.max+1))
+  
+  df.adj = left_join(df.adj,lab.df, by="method")
+  df.un = left_join(df.un,lab.df, by="method")
+  
+  
+  ggplot(df.adj, aes(x=z)) +
+    scale_x_continuous(limits=c(0,z.max),expand=c(0,0))+
+    scale_y_continuous(expand=c(0,0.05))+
+    geom_line(data=t.dens, aes(y=t.dens), color="blue", size=1.1, linetype="longdash") +
+    stat_abszdensity(data=df.un, bw=bw,color="#aaaaaa",size=1) +
+    stat_abszdensity(data=df.adj, bw=bw,color="black",size=0.5) +
+    #geom_density(data = df.un, fill=NA, color="#aaaaaa", kernel="epanechnikov",bw=bw, size=1) +
+    #geom_density(data = df.adj, fill=NA, color="black", kernel="epanechnikov",bw=bw, size=0.5) +
+    theme_bw() +  
+    theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) +
+    geom_vline(xintercept = c(2.576, 1.96, 1.645), linetype="dashed", color="#999999") + facet_wrap(~lab) + ylab("Density")
+  
+  
+}
+
+
+
+compare.with.rct.plot = function(type="Omit") {
+  z.min = 0; z.max = 7
+  t = type
+
+  df.adj = filter(df.big, type==t)    
+
+  df.adj = filter(df.adj,is.true(abs(z)<=z.max+1))
+
+  df.adj=bind_rows(df.adj, mutate(df.adj, z=-z))
+
+  df.rct = filter(df.adj, method=="RCT")
+  df.rct = bind_rows(
+    mutate(df.rct,method="DID"),
+    mutate(df.rct,method="IV"),
+    mutate(df.rct,method="RDD")
+  ) 
+
+  df.adj = filter(df.adj, method != "RCT")
+  
+  
+  ggplot(df.adj, aes(x=z)) +
+    scale_x_continuous(limits=c(0,z.max),expand=c(0,0))+
+    scale_y_continuous(expand=c(0,0))+
+    stat_abszdensity(data=df.rct, bw=bw,color="#aaaaaa",size=1) +
+    stat_abszdensity(data=df.adj, bw=bw,color="black",size=1) +
+    #geom_density(data = df.rct, fill=NA, color="#aaaaaa", kernel="epanechnikov",bw=bw, size=1) +
+    #geom_density(data = df.adj, fill=NA, color="black", kernel="epanechnikov",bw=bw, size=1) +
+    theme_bw() +  
+    theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) +
+    geom_vline(xintercept = c(2.576, 1.96, 1.645, -2.576, -1.96, -1.645), linetype="dashed", color="#999999") + facet_wrap(~method,ncol = 3) + ylab("Density")
+}
+
+
+
+
+compare.with.rct.ratio = function(type="Omit") {
+  z.min = 0; z.max = 7
+  t = type
+
+  
+  z.seq = seq(z.min, z.max, by=0.01)
+  df.adj = filter(df.big, type==t, abs(z)<=z.max+1)    
+
+  if (!file.exists("density_ratios.RDS")) {
+    z.did = filter(df.adj, method=="DID")$z
+    z.iv = filter(df.adj, method=="IV")$z
+    z.rdd = filter(df.adj, method=="RDD")$z
+    z.rct = filter(df.adj, method=="RCT")$z
+    
+    r.did = absz.density.ratio(z.did, z.rct, at=z.seq,B=1000) %>%
+      filter(var=="logratio") %>% mutate(method="DID")
+    
+    r.iv = absz.density.ratio(z.iv, z.rct, at=z.seq,B=1000) %>%
+      filter(var=="logratio") %>% mutate(method="IV")
+    
+    r.rdd = absz.density.ratio(z.rdd, z.rct, at=z.seq,B=1000) %>%
+      filter(var=="logratio") %>% mutate(method="RDD")
+  
+    r.df = bind_rows(r.did, r.iv, r.rdd)
+    
+    saveRDS(r.df, here("Data","density_ratios.RDS"))
+  } else {
+    r.df = readRDS(here("Data","density_ratios.RDS"))
+  }
+  r.df = r.df %>% rename(z = at)
+
+  min.y = -1.75
+  r.df$ci.lower=pmax(r.df$ci.lower, min.y)
+  ggplot(r.df, aes(x=z)) +
+    geom_hline(yintercept=0)+
+    geom_ribbon(aes(x=z, ymin=ci.lower, ymax=ci.upper), alpha=0.3) +
+    geom_line(aes(y=estimate))+
+    scale_y_continuous(limits=c(min.y,1.7))+
+    #geom_line(aes(y=ci.lower), color="blue")+
+    #geom_line(aes(y=ci.upper), color="green")+
+    theme_bw() +  
+    theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) +
+    geom_vline(xintercept = c(2.576, 1.96, 1.645), linetype="dashed", color="#999999") + facet_wrap(~method,ncol = 3) + ylab("log density ratio")
+  
+}
+```
+
+# Excess statistics plots similar to BCH
+
+
+## Adjustment: Ommit
+```{r "excess_omit"}
+make.excess.plot("Omit")
+```
+Blue: Assumed t-densities from BCH
+Grey: z-values as reported
+Black: Adjusted z-statistics
+
+
+## Reported vs t vs Uniform
+```{r "excess_uniform"}
+make.excess.plot("Uniform derounding")
+```
+Blue: Assumed t-densities from BCH
+Grey: z-values as reported
+Black: Adjusted z-statistics
+
+# Compare with RCT
+
+## Omit
+```{r "comp_with_rct_omit", fig.height=2.5}
+compare.with.rct.plot("Omit")
+```
+
+```{r "ratio_with_rct_omit", fig.height=2.5}
+compare.with.rct.ratio("Omit")
+```
+
+
+## Uniform derounding
+```{r "comp_with_rct_uniform", fig.height=2.5}
+compare.with.rct.plot("Uniform derounding")
+```
+
+```{r "ratio_with_rct_uniform", fig.height=2.5}
+compare.with.rct.ratio("Uniform derounding")
+```
+
+
+
+# Double-Hump: A simulation
+
+```{r "cauchy_sim", fig.height=2.5}
+set.seed(123456789)
+n = 5000
+loc = 2; scale = 0.8
+
+zA = rcauchy(2*n,loc, scale)
+zB = rcauchy(n,0, scale)
+
+# Use absolute z-statistics
+abs.z = abs(c(zA, zB))
+
+z.max = 10
+df.sim = data.frame(z=abs.z, type="Simulated z (Mixed Cauchy)")
+df.omit$type = "Empirical z"
+
+df = bind_rows(df.omit, df.sim) %>%
+  filter(is.true(z>0 & z<=z.max+1))
+  
+ggplot(df, aes(x=z)) +
+  geom_histogram(binwidth=0.05,aes(y=..density..), color="#aaaaaa", fill="#aaaaaa") +
+  scale_x_continuous(limits=c(0,z.max))+
+  stat_abszdensity(mapping = aes(x=z),bw=0.1, size=1) +
+  #geom_density(fill=NA, color="black", kernel="epanechnikov",bw=bw) +
+  theme_bw() +  
+  ylab("Density") +
+  geom_vline(xintercept = c(1.96, 1.64, 2.576), linetype="dashed",color="#999999")+ 
+  facet_wrap(~type,ncol = 2)
+
+```
+
+### What probability mass is below BCH's t-curves?
+
+```{r}
+# DID
+pt(0,2,1.81,lower.tail = FALSE)
+# IV
+pt(0,2,1.65,lower.tail = FALSE)
+# RDD
+pt(0,2,1.51,lower.tail = FALSE)
+# RCT
+pt(0,2,1.16,lower.tail = FALSE)
+```
+
+Between 87.7% (RCT) and 96.5% (DID)
+
+# Compare with rct_pre_registered
+
+```{r "rct_vs_rct_registered"}
+z.min = 0; z.max = 7
+t = "Omit"
+
+df.adj = filter(df.big, type==t)    
+
+df.adj = filter(df.adj,is.true(abs(z)<=z.max+1))
+
+df.rct = filter(df.adj, method=="RCT", rct_pre_registered==1 | registered=="1")
+
+#df.rct = filter(df.adj, method=="RCT", year >= 2018)
+
+
+df.rct = bind_rows(
+  mutate(df.rct,method="RCT"),
+  mutate(df.rct,method="DID"),
+  mutate(df.rct,method="IV"),
+  mutate(df.rct,method="RDD")
+) 
+df.adj = filter(df.adj, year < 2018)
+ggplot(df.adj, aes(x=z)) +
+    scale_x_continuous(limits=c(0,z.max),expand=c(0,0))+
+    scale_y_continuous(expand=c(0,0))+
+    stat_abszdensity(data=df.rct, bw=bw,color="#aaaaaa",size=1) +
+    stat_abszdensity(data=df.adj, bw=bw,color="black",size=1) +
+    theme_bw() +  
+    theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) +
+    geom_vline(xintercept = c(2.576, 1.96, 1.645, -2.576, -1.96, -1.645), linetype="dashed", color="#999999") + facet_wrap(~method,ncol = 3) + ylab("Density")
+
+
+```
+
+# Compare density by year
+
+```{r "density_by_year"}
+z.min = 0; z.max = 7
+t = "Omit"
+
+df.adj = filter(df.big, type==t)   
+
+df.2015 = filter(df.adj, year==2015)
+df.2018 = filter(df.adj, year==2018)
+
+ggplot(df.adj, aes(x=z, color=as.factor(year))) +
+    scale_x_continuous(limits=c(0,z.max),expand=c(0,0))+
+    scale_y_continuous(expand=c(0,0))+
+    stat_abszdensity(data=df.2015, color="orange", bw=bw,size=1) +
+    stat_abszdensity(data=df.2018, color="blue", bw=bw,size=1) +
+    theme_bw() +  
+    theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) +
+    geom_vline(xintercept = c(2.576, 1.96, 1.645, -2.576, -1.96, -1.645), linetype="dashed", color="#999999") + facet_wrap(~method) + ylab("Density")
+
+
+```
+

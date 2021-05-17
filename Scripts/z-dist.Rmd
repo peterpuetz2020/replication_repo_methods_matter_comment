@@ -1,0 +1,194 @@
+---
+title: "Distribution of z-statistics"
+output:
+  pdf_document: 
+    keep_tex: yes
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+library(forcats)
+library(RoundingMatters)
+library(ggplot2)
+library(here)
+knitr::opts_chunk$set(echo = FALSE, error=TRUE, warn=FALSE, cache=FALSE, fig.width=5.5, fig.height=3.2,fig.path = here("Results/",""))
+dat = readRDS(here("Data","MM_new.Rds"))
+options(warn=-1)
+methods = unique(dat$method)
+
+df.rep = select(dat, mu, sigma, z, num.deci,s, method, keep.obs) %>% mutate(mode="reported", type="No adj.")
+df.omit = df.rep %>% filter(keep.obs) %>% mutate(mode="omit", type="Ommit")
+df.unif = df.rep %>% mutate(z = deround.z.uniform(mu, sigma,num.deci)) %>% mutate(mode="uniform", type="Uniform derounding")
+
+df.big = bind_rows(df.rep, df.omit, df.unif)
+
+z.max = 3; bw = 0.15
+
+m = "ALL"
+make.z.plot = function(m, add.org.kernel = FALSE) {
+  
+  if (m!="ALL") {
+    df.rep.m = filter(df.rep,method==m)
+  } else {
+    df.rep.m = df.rep
+  }
+  
+  z.pdf = make.z.pdf(z = df.rep.m$z)
+  df.zda = df.rep.m %>% mutate(z = deround.z.density.adjust(z.pdf, mu, sigma, num.deci,verbose = FALSE))%>% mutate(type="ZDA derounding")
+  
+  df = df.big %>% bind_rows(df.zda)
+  if (m != "ALL")
+    df = df %>% filter(method==m)
+  
+  df = filter(df,is.true(z<=z.max+1))
+  
+  breaks = seq(-0.0000001,z.max+0.1, by = 0.1)
+  gg = ggplot(df, aes(x=z)) +
+    geom_histogram(breaks=breaks,aes(y=..density..), color="#aaaaaa", fill="#aaaaaa") +
+    xlim(-0.01,z.max)
+  if (add.org.kernel) gg = gg + geom_density(fill=NA, stat="density",kernel="epanechnikov",bw=bw,  linetype="solid",color="#666666")
+  
+  gg = gg +
+    stat_abszdensity(mapping = aes(x=z), geom="line", kernel="epanechnikov",bw=bw) +    
+    theme_bw() +  
+    geom_vline(xintercept = c(1.96, 1.64, 2.576), linetype="dashed")+ 
+    facet_wrap(~type,ncol = 2)
+  
+  gg
+}
+
+z.plot.4m = function(add.org.kernel = FALSE, t="Ommit") {
+
+  df = df.big %>% filter(type==t, method != "ALL")
+  df = filter(df,is.true(z<=z.max+1))
+  breaks = seq(-0.0000001,z.max+0.1, by = 0.1)
+  
+  gg = ggplot(df, aes(x=z)) +
+    geom_histogram(breaks=breaks,aes(y=..density..), color="#aaaaaa", fill="#aaaaaa") +
+    xlim(-0.01,z.max)
+  if (add.org.kernel) gg = gg + geom_density(fill=NA, stat="density",kernel="epanechnikov",bw=bw,  linetype="solid",color="#666666")
+  
+  gg = gg +
+    stat_abszdensity(mapping = aes(x=z), geom="line", kernel="epanechnikov",bw=bw) +    
+    theme_bw() +  
+    geom_vline(xintercept = c(1.96, 1.64, 2.576), linetype="dashed")+ 
+    facet_wrap(~method,ncol = 2) +
+    ylab("Density")
+  
+  gg
+}
+
+z.plot.comment = function(add.org.kernel = TRUE) {
+
+  df = df.big %>% filter(mode %in% c("reported", "omit"), method %in% c("DID", "IV")) %>%
+    mutate(type=ifelse(mode=="omit","Only s >= 37","No adjustment"))
+  
+  
+  df = filter(df,is.true(z<=z.max+1))
+  # make bins of width 0.1 such that z=2 is in a new bin
+  # right of z=1.96, like in BCH
+  breaks = seq(-0.0000001,z.max+0.1, by = 0.1)
+  gg = ggplot(df, aes(x=z)) +
+    geom_histogram(breaks=breaks,aes(y=..density..), color="#aaaaaa", fill="#aaaaaa") +
+    xlim(-0.1,z.max)
+  if (add.org.kernel) gg = gg + geom_density(fill=NA, stat="density",kernel="epanechnikov",bw=bw,  linetype="solid",color="#666666")
+  
+  gg = gg +
+    stat_abszdensity(mapping = aes(x=z), geom="line", kernel="epanechnikov",bw=bw) +    
+    theme_bw() +  
+    geom_vline(xintercept = c(1.96, 1.64, 2.576), linetype="dashed")+ 
+    facet_grid(type~method) +
+    ylab("Density")
+  
+  gg
+}
+
+
+```
+
+# All 4 methods with ommited
+
+```{r "zplot_iv_did"}
+z.max = 6
+z.plot.comment()
+
+```
+
+
+```{r "zplot_omit"}
+z.max = 6
+z.plot.4m(add.org.kernel=TRUE, t="Ommit")
+```
+
+
+```{r "zplot_reported"}
+z.max = 6
+z.plot.4m(add.org.kernel=TRUE, t="No adj.")
+```
+
+
+
+# Distribution of z-tests: All vs non-omitted
+
+We see how the derounding approaches mainly remove the large clusters at z=2.
+
+### Pooled
+```{r "zplot_all"}
+z.max = 4
+make.z.plot("ALL", add.org.kernel = TRUE)
+```
+
+### DID
+```{r "zplot_did"}
+make.z.plot("DID")
+
+```
+
+### IV
+```{r "zplot_iv"}
+make.z.plot("IV")
+```
+
+### RDD
+```{r "zplot_rdd"}
+make.z.plot("RDD")
+```
+
+### RCT
+```{r "zplot_rct"}
+make.z.plot("RCT")
+```
+
+
+# Same plots with larger z range
+
+```{r}
+z.max = 6; bw=0.1
+```
+
+
+### Pooled
+```{r "zplot2_all"}
+make.z.plot("ALL", add.org.kernel = TRUE)
+```
+
+### DID
+```{r "zplot2_did"}
+make.z.plot("DID")
+
+```
+
+### IV
+```{r "zplot2_iv"}
+make.z.plot("IV")
+```
+
+### RDD
+```{r "zplot2_rdd"}
+make.z.plot("RDD")
+```
+
+### RCT
+```{r "zplot2_rct"}
+make.z.plot("RCT")
+```

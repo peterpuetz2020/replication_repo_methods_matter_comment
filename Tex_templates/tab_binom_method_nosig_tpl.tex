@@ -1,0 +1,48 @@
+
+\def\sym#1{\ifmmode^{#1}\else\(^{#1}\)\fi}
+\begin{tabular}{l*{<<length(methods)>>}{c}}
+\hline\hline
+&
+#< collapse " & "
+ \multicolumn{1}{c}{(<<1:length(methods)>>)}
+#>
+\\
+&
+#< collapse " & "
+ \multicolumn{1}{c}{<<methods>>}
+#>
+\\
+
+\hline
+\hline
+
+#< use dat; group_by h
+Window half-width <<first(h)>>\\
+
+Proportion Significant&
+#< collapse " & "
+ <<round(theta,3)>>
+#>
+\\
+
+(p-value) &
+#< collapse " & "
+ (<<format(round(p.value,3), nsmall=3)>>)
+#>
+\\
+
+No. obs.&
+#< collapse " & "
+ <<round(obs)>>
+#>
+\\
+#< sep
+
+\hline
+
+#>
+#>
+
+\hline\hline
+\end{tabular}
+

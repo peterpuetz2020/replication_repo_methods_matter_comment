@@ -1,0 +1,145 @@
+---
+title: "Tables Binominal Test"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, error=TRUE)
+library(xglue)
+library(forcats)
+library(dplyrExtras)
+library(here)
+dat = readRDS(here("Data","deround_binom.Rds"))
+
+dat = dat %>% 
+  filter(!mode %in% c("omit.unif","zda.all.pdf")) %>%
+  mutate_rows(mode=="reported", mode="No adj.") %>%
+  mutate_rows(mode=="omit", mode="Omit") %>%
+  mutate_rows(mode=="uniform", mode="Uniform") %>%
+  mutate_rows(mode=="zda", mode="ZDA") %>%
+  mutate_rows(mode=="dsr", mode="DSR")
+
+modes = unique(dat$mode)
+methods = unique(dat$method)
+dat = arrange(dat, desc(h))
+
+tpl = readLines(here("Tex_templates","tab_binom_by_deround_tpl.tex"))
+meth.tpl = readLines(here("Tex_templates","tab_binom_by_method_tpl.tex"))
+meth.nostar.tpl = readLines(here("Tex_templates","tab_binom_method_nosig_tpl.tex"))
+
+
+all.dat = dat
+p.stars = function(p) {
+  res = rep("", length(p))
+  res[p<=0.1] = "*"
+  res[p<=0.05] = "**"
+  res[p<=0.01] = "***"
+  res
+}
+
+```
+
+# Binominal tests
+
+## All data
+
+```{r results="asis"}
+dat = filter(all.dat, method=="ALL")
+res = xglue(tpl, open="<<", close=">>")
+writeLines(res, here("Results", "binom_all.tex"))
+res
+```
+
+
+## DID
+
+```{r results="asis"}
+dat = filter(all.dat, method=="DID")
+res = xglue(tpl, open="<<", close=">>")
+writeLines(res, here("Results", "binom_did.tex"))
+res
+```
+
+## IV
+
+```{r results="asis"}
+dat = filter(all.dat, method=="IV")
+res = xglue(tpl, open="<<", close=">>")
+writeLines(res, here("Results", "binom_iv.tex"))
+res
+```
+
+
+## RDD
+
+```{r results="asis"}
+dat = filter(all.dat, method=="RDD")
+res = xglue(tpl, open="<<", close=">>")
+writeLines(res, here("Results", "binom_rdd.tex"))
+res
+```
+
+## RCT
+
+```{r results="asis"}
+dat = filter(all.dat, method=="RCT")
+res = xglue(tpl, open="<<", close=">>")
+writeLines(res, here("Results", "binom_rct.tex"))
+res
+```
+
+# Tables with the 5 methods next to each other
+
+## No derounding
+
+```{r "binom05_reported", results="asis"}
+dat = filter(all.dat, mode=="No adj.")
+res = xglue(meth.tpl, open="<<", close=">>")
+writeLines(res, here("Results", "binom_reported.tex"))
+res
+
+```
+
+
+## Derounding mode: Omit
+
+```{r "binom05_omit", results="asis"}
+dat = filter(all.dat, mode=="Omit")
+res = xglue(meth.tpl, open="<<", close=">>")
+writeLines(res, here("Results", "binom05_omit.tex"))
+res
+
+res = xglue(meth.nostar.tpl, open="<<", close=">>")
+writeLines(res, here("Results", "binom05_aer_omit.tex"))
+res
+```
+
+
+## 10% Derounding mode: Omit
+
+```{r "binom10_omit", results="asis"}
+all.dat = readRDS(here("Data","deround_binom_10percent.Rds"))
+
+dat = filter(all.dat, mode=="omit") %>%
+  arrange(desc(h))
+res = xglue(meth.tpl, open="<<", close=">>")
+writeLines(res, here("Results", "binom10_omit.tex"))
+res
+
+```
+
+
+## 1% Derounding mode: Omit
+
+```{r "binom01_omit", results="asis"}
+all.dat = readRDS(here("Data","deround_binom_01percent.Rds")) 
+
+dat = filter(all.dat, mode=="omit") %>%
+  arrange(desc(h))
+res = xglue(meth.tpl, open="<<", close=">>")
+writeLines(res, here("Results", "binom01_omit.tex"))
+res
+
+```

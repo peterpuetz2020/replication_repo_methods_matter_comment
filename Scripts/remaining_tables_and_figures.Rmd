@@ -1,0 +1,265 @@
+---
+title: "Comment and Working Paper Figures and Tables not created elsewhere"
+output: 
+  pdf_document: 
+    df_print: kable    
+    keep_tex: yes
+---
+
+```{r setup, include=FALSE}
+library(dplyr)
+library(ggplot2)
+library(RoundingMatters)
+library(dplyrExtras)
+library(here)
+knitr::opts_chunk$set(echo = FALSE, error=TRUE, warn=FALSE, cache=FALSE, fig.width=5.5, fig.height=3.2,fig.path = here("Results/",""))
+options(dplyr.summarise.inform = FALSE)
+
+ggtitle = function(label,...) {ggplot2::ggtitle("")}
+
+dat = readRDS(here("Data","MM_new.Rds"))
+
+wdat = readRDS(here("Data","deround_t_ci.Rds"))
+unique(wdat$mode)
+wdat= wdat %>% mutate_rows(mode=="reported", mode="org") %>%
+  mutate(share_signif = theta)
+
+h.bch = c(0.05,0.075,0.1,0.2,0.3,0.4,0.5)
+```
+
+# 0 Basic statistics
+
+### Share of reported mu / sigma, t, p and CI
+```{r }
+dat %>% 
+  group_by(report) %>%
+  summarize(
+    n = n(),
+    share = n / sum(!is.na(dat$report))
+  )
+```
+
+
+# 1 The rounding problem and our solution in the pooled data
+
+### Figure 1 Combined in Two panels
+
+```{r "share_of_significant_tests", fig.height=2.5, fig.width=5.5}
+df = filter(wdat, method=="ALL", mode %in% c("org","omit")) %>%
+  mutate(type = ifelse(mode=="org","BCH","Our Adjustment")) %>%
+  mutate(type = relevel(as.factor(type),"BCH"))
+
+ggplot(df, aes(x=h, y= share_signif)) +
+  geom_vline(xintercept = h.bch, col="grey") +
+  geom_hline(yintercept = 0.5, col="blue") +
+  coord_cartesian(ylim=c(0.3, 0.7)) +
+  geom_ribbon(data = filter(df,h<=0.04), mapping=aes(ymin = ci.low, ymax = ci.up), alpha=0.3) +
+  geom_ribbon(data = filter(df,h>0.04), mapping=aes(ymin = ci.low, ymax = ci.up), alpha=0.3) +
+  geom_point() + theme_bw() + ylab("Share of tests with z >= 1.96") +
+  xlab("Window half-width h")+ggtitle("All Methods") +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) +
+  facet_wrap(~type)
+```
+
+
+### Figure 2: Number of included observations
+
+```{r "number_of_included_observations", fig.height=3,  fig.width=5.5}
+df = filter(wdat, method=="ALL", mode %in% c("org","omit")) %>%
+  mutate(mode = ifelse(mode=="org","BCH","Our Adjustment")) %>%
+  mutate(mode = relevel(as.factor(mode),"BCH"))
+
+ggplot(df, aes(x=h, y= obs)) + geom_vline(xintercept = h.bch, col="grey") + geom_point() + theme_bw() + ylab("") + xlab("Window half-width h")+ggtitle("Number of included observations (all methods)") + theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) + facet_wrap(~mode)
+```
+
+### Share of obs with z==2 in smallest window
+
+```{r echo=TRUE}
+sum(dat$z==2, na.rm=TRUE)
+d = filter(dat, abs(z-1.96)<=0.05)
+sum(d$z==2, na.rm=TRUE)
+sum(d$z==2, na.rm=TRUE) / NROW(d)
+
+
+```
+
+
+## Table of significant digits of standard error
+
+```{r include=FALSE}
+dat$nsig.sd = nchar(as.character(abs(dat$s)))
+dat %>%  group_by(nsig.sd) %>% summarize(count=n()) %>% arrange(nsig.sd)
+dat %>% 
+  mutate(nsig = ifelse(nsig.sd %in% 0:6, nsig.sd,100)) %>%
+  group_by(nsig) %>% summarize(count=n()) %>% arrange(nsig)
+
+dat %>%  group_by(nsig.sd) %>% summarize(count=n()) %>% arrange(nsig.sd)
+```
+
+### Share digits
+
+```{r "share_sig_digits"}
+as.perc = function(x, digits=1) paste0(round(x*100,digits),"%")
+dat = dat %>% mutate(
+    subset = ifelse(z==2,"z is 2","z is not 2")
+  )
+tab = dat %>%
+  group_by(subset) %>%
+  summarize(
+    obs=n(),
+    single_signif_sd = as.perc(mean(nsig.sd==1, na.rm=TRUE)),
+    single_or_double_signif_sd = as.perc(mean(nsig.sd<=2, na.rm=TRUE))
+  )
+tab
+```
+
+
+### Correlation s <= 37 and z
+
+```{r echo=TRUE}
+cor.test(dat$z, 1L*(!dat$keep.obs))
+
+dat.omit = dat %>% select(mu,z, sigma) %>% filter(is.finite(z), is.finite(sigma))
+cor.test(dat.omit$z, dat.omit$sigma)
+
+dat.omit = filter(dat.omit,z >0, sigma > 0)
+cor.test(log(dat.omit$z), dat.omit$sigma)
+
+```
+
+### Table of omitted obs
+
+```{r}
+dat$omit = !dat$keep.obs
+
+res = dat %>%
+  group_by(z) %>%
+  mutate(count.z = n()) %>%
+  mutate(group = case_when(
+    z == 2 ~ "z=2",
+    count.z >= 10 ~ "other bunching",
+    TRUE ~ "no bunching"
+  )) %>%
+  group_by(group) %>%
+  summarize(
+    count = n(),
+    share.omit = paste0(round(100*sum(omit, na.rm=TRUE) / n(),1),"%")
+  ) %>%
+  arrange(count) %>%
+  select(group, count, share.omit)
+res
+
+
+dat %>%
+  ungroup() %>%
+  summarize(
+    count = n(),
+    share.omit = paste0(round(100*sum(omit, na.rm=TRUE) / n(),1),"%")
+  )
+
+```
+
+```{r "observations_at_risk", fig.height=2.5, fig.width=6}
+library(stringtools)
+library(forcats)
+library(ggplot2)
+risks = rounding.risks(z = dat$z, s=dat$s, z0=1.96, h=0.1)
+
+dr = rounding.risks.summary(risks) %>% 
+  filter(error.type != "any") %>%
+  mutate(Side = ifelse(side=="below","z < 1.96","z >= 1.96"))
+
+colors = rev(c("#aaaaaa","#000000"))
+
+ggplot(dr, aes(x=s.bar,y=risk, color=Side)) +
+  geom_vline(xintercept = 37, col="#888888") +
+  geom_line(size=1.2, alpha=0.7) +
+  theme_bw() +
+  ylab("Share of observations at risk") +
+  xlab("Ommission threshold for s") +
+  ggtitle("Risk of wrongful inclusion") +
+  facet_wrap(~error.lab) +
+  scale_y_continuous(breaks = seq(0,0.5,by=0.1))+
+  scale_color_manual(values=colors) 
+  
+
+```
+
+
+
+### Table of most common bunched z-values
+
+```{r include = FALSE}
+library(dplyr)
+res = dat %>%
+  group_by(z) %>%
+  summarise(count = n(), dist=first(abs(z-1.96))) %>%
+  ungroup() %>%
+  arrange(-count) %>%
+  filter(count >= 10)
+res
+```
+
+
+# Counts by method
+
+```{r}
+dat %>%
+  mutate(in.window = abs(z-1.96) <= 0.05) %>%
+  group_by(method) %>%
+  summarize(
+    total.obs = n(),
+    obs.with.z2 = sum(z==2),
+    share.z2.in.window = round(100*obs.with.z2 / sum(in.window),1)
+  )
+```
+
+
+# RCT shares of significant tests in window for caliper tests
+
+Used for last line in Caliper table.
+```{r echo=TRUE}
+rct = filter(dat, method=="RCT",keep.obs)
+rct %>% filter(abs(z-1.96)<=0.5) %>% summarize( mean(z >= 1.96))
+rct %>% filter(abs(z-1.96)<=0.35) %>% summarize( mean(z >= 1.96))
+rct %>% filter(abs(z-1.96)<=0.2) %>% summarize( mean(z >= 1.96))
+
+
+```
+
+
+# Andrews and Kasy: Correlation between mu and sigma
+
+
+## Correlation in complete data set
+```{r echo=TRUE}
+df = dat %>%
+  select(mu, sigma,z) %>% filter(is.finite(mu), is.finite(sigma))
+cor(df$mu, df$sigma)
+
+cor(df$z, df$sigma,use = "complete.obs")
+
+
+df = filter(df, mu >0 , sigma > 0)
+cor(log(df$mu), log(df$sigma))
+
+#df = filter(df, is.finite(z), is.finite(sigma))
+```
+
+## Correlation in subset z <= 1.645
+```{r echo=TRUE}
+df = dat %>%
+  select(mu, sigma,z) %>% filter(is.finite(mu), is.finite(sigma), z<=1.645)
+cor(df$mu, df$sigma)
+
+df = filter(df, mu >0 , sigma > 0)
+cor(log(df$mu), log(df$sigma))
+
+cor.test(log(df$mu), log(df$sigma))
+
+summary(lm(log(mu) ~ log(sigma), data=df))
+
+cor(df$sigma, df$z)
+
+```
+
