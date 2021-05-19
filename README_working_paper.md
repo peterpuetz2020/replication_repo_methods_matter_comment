@@ -7,7 +7,7 @@ If you use RStudio, open the R project
 `mm_replication.Rproj` first, then all R scripts loaded into this project should run as they are. Adjustments of the paths should be only necessary for the do-files (see 6. and 7.)
 If you do not use an R project, you have to set your working directory at the beginning of each R script (`setwd(…)`) to the directory where the scripts are located.
 
-0. Install the required packages by using "install_packages.R"
+0. Install the required packages by using "install_packages.R".  Note that the package [RoundingMatters](https://github.com/skranz/RoundingMatters) was written mainly for this replication.
 
 1. Run the function "adapt.MM.data" in "make_new_data.R"" to create the adapted version of BCH's data set:
 `source("Scripts/make_new_data.R")`
