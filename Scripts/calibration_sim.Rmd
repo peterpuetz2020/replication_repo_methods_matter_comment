@@ -1,0 +1,91 @@
+---
+title: "Problem of calibrating benchmark distributions for z > 5"
+output: pdf_document
+---
+#### Authors: Sebastian Kranz and Peter Pütz
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = FALSE, error=TRUE, warn=FALSE, cache=FALSE, fig.width=5.5, fig.height=3.2,fig.path = "figures/")
+
+```
+
+BCH write on p. 3650:
+
+>We assume that the observed test statistic distribution 
+above   z   =  5  should be free of  p-hacking or publication  bias—the  incentives to p-hack in a range so far above the traditional significance thresholds are plausibly zero. We then produce a  non-central t-distribution for each method that closely fits the observed distribution in the range 
+z  >  5  by calibrating the degrees of freedom and  non-centrality parameter.
+
+We just now realized (after submitting our revision) that the argumentation that the observed distribution for z above 5 is free of p-hacking and publication bias is problematic. Even if publication bias only occurs for small absolute z, it will also affect the observed density for large z. That is because the total area under the density will be normalized to 1. So if publication bias takes away density for small z, this will automatically add density for the large z not afflicted by publication bias.
+
+Let us illustrate this with a simple simulation in R. We assume that the latent distribution of z-statistics is a t-distribution. At the same time we assume that tests with $abs(z) \leq 1.9$ only have a 50% publication probability.
+
+
+```{r}
+# Simulation study
+n = 1000000
+
+# Draw latent original z from t-distribution
+# with 1 degree of freedom
+z.org = rt(n,1)
+
+# Observations with abs(z) <= 1.9 will be ommited
+# with 50% probability due to publication bias
+omit.prob = 0.5
+keep = runif(n) >= omit.prob | abs(z.org) > 1.9
+z.obs = z.org[keep]
+
+# Compute and plot original and observed densities
+max.z = 10
+dens.org = density(z.org, from=-max.z,to=max.z, bw=0.1)
+dens.obs = density(z.obs, from=-max.z,to=max.z, bw=0.1)
+
+library(ggplot2)
+plot(dens.org, main="Densities", xlab="z")
+lines(dens.obs, col="blue")
+```
+
+
+The black line is the original density of z without publication bias and the blue line the observed density after publication bias. 
+
+Let us now plot the ratio's of the observed to the latent density:
+
+```{r}
+dens.ratio = dens.obs$y / dens.org$y
+plot(dens.org$x, dens.ratio,
+     main="Density Ratios: Observed / Latent",
+     xlab="z", ylab="Density Ratio")
+```
+
+We see that the density ratio is not only different from 1 for low absolute z-statistics where publication bias takes place, but also in the range where no publication bias takes place. In particular also for $abs(z) > 5$ both densities don't match, the density of observed z-statistics is roughly 50% higher than the latent original density.
+
+Thus, calibrating a t-distribution on the observed data that matches the tails with $abs(z) > 5$ would not recover in this example the latent distribution of z-statistics.
+
+### Nicer plot with ggplot
+
+These plots are shown in the working paper. They only show z >= 0.
+
+```{r "densities_latent_vs_observed", fig.width=3.5, fig.height=2.6}
+library(dplyr); library(ggplot2)
+df = bind_rows(
+  tibble(type="Latent", z = dens.org$x, Density= dens.org$y),
+  tibble(type="Observed", z = dens.obs$x, Density= dens.obs$y)
+)
+colors = c("#000000","#2222dd")
+ggplot(df, aes(x=z,y=Density, color=type)) + 
+  geom_line() + theme_bw() +
+  xlim(0, 10) +
+  scale_color_manual(values=colors) 
+
+```
+
+# Ratio
+```{r "density_ratios_latent_vs_observed", fig.width=2.35, fig.height=2.6}
+library(dplyr); library(ggplot2)
+df = tibble(z = dens.org$x, `Density Ratio`= dens.obs$y / dens.org$y)
+ggplot(df, aes(x=z,y=`Density Ratio`)) + 
+  geom_line() + theme_bw() +
+  xlim(0, 10) + ylab("observed / latent density")
+  scale_color_manual(values=colors) 
+
+```
