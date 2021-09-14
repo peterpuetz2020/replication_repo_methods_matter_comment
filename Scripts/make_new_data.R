@@ -83,7 +83,7 @@ adapt.MM.data = function() {
   dat = dat %>%
     select(journal, article, journal_name, table,z, mu,sigma,sigma.deci, mu.deci, num.deci, report, method, title, mu_str,sigma_str, year, rct_pre_registered, registered, t.bch = t,
            experience_avg, experience_avg_sq, share_top_authors, share_top_phd, top5, aw,  sign_10pct, sign_5pct, sign_1pct, journal_article_cluster, ireport,
-           authored_solo, share_female_authors, editor_present, FINANCE, MACRO_GROWTH, GEN_INT, EXP, DEV, LABOR, PUB, URB, unique_j, DID, IV, RDD, RCT ) %>%
+           authored_solo, share_female_authors, editor_present, FINANCE, MACRO_GROWTH, GEN_INT, EXP, DEV, LABOR, PUB, URB, unique_j, DID, IV, RDD, RCT, fstat ) %>%
     mutate(
       rowid = 1:n(),
       # compute significand for standard error
