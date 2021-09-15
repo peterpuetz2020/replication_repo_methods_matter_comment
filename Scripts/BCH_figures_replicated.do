@@ -17,7 +17,7 @@ keep if keep_obs==1
 *** BCH figure 1a
 histogram t if t <= 10 , title() width(0.1) start(0) fcolor(gs10) lcolor(gs10) kdensity kdenopts(width(0.1)) xtitle(z-statistic) xline(1.65 1.96 2.58, lwidth(thin)) xlabel(0 1 1.65 "*" 1.96 "**" 2.58 "***" 3 4 5 6 7 8 9 10) legend(off) scheme(s1mono)
 
-graph export figure1a_BCH_omission.png, replace width(1000)
+graph export figure1a_BCH_omission.pdf, replace 
 
 *** BCH figure 1b
 
@@ -25,7 +25,7 @@ histogram t if t <= 10 & top5==1 , title("Top 5") saving(temp1, replace) width(0
 histogram t if t <= 10 & top5==0 , title("Non-Top 5") saving(temp2, replace) width(0.1) start(0) fcolor(gs10) lcolor(gs10) kdensity kdenopts(width(0.1)) xtitle(z-statistic) xline(1.65 1.96 2.58, lwidth(thin)) xlabel(0(1)10) legend(off) scheme(s1mono)
 
 graph combine temp1.gph temp2.gph , ycommon scheme(s1mono) xcommon  xsize(4) ysize(1.5)
-graph export figure1b_BCH_omission.png, replace width(1000)
+graph export figure1b_BCH_omission.pdf, replace 
 
 *** BCH figure 2
 
@@ -35,7 +35,7 @@ histogram t if t <= 10 & method=="RCT" , title("RCT") saving(temp3, replace) wid
 histogram t if t <= 10 & method=="RDD", title("RDD") saving(temp4, replace) width(0.1) start(0) fcolor(gs10) lcolor(gs10) kdensity kdenopts(width(0.1)) xtitle(z-statistic) xline(1.65 1.96 2.58, lwidth(thin)) xlabel(0(1)10) legend(off) scheme(s1mono)
 
 graph combine temp1.gph temp2.gph temp3.gph temp4.gph, ycommon scheme(s1mono) xcommon xsize(4) ysize(3)
-graph export figure2_BCH_omission.png, replace width(1000) 
+graph export figure2_BCH_omission.pdf, replace 
 
 
 *** BCH Figure 3 after applying omission approach
@@ -70,7 +70,7 @@ histogram t if t <= 10 & year<2015 & top3==1 , title("2005-2011") saving(temp1, 
 histogram t if t <= 10 & year>=2015 & top3==1 , title("2015 & 2018") saving(temp2, replace) width(0.1) start(0) fcolor(gs10) lcolor(gs10) kdensity kdenopts(width(0.1)) xtitle(z-statistic) xline(1.65 1.96 2.58, lwidth(thin)) xlabel(0(1)10) legend(off) scheme(s1mono)
 
 graph combine temp1.gph temp2.gph, ycommon scheme(s1mono) xcommon xsize(4) ysize(1.5)
-graph export figure3a_BCH_omission.png, replace width(1000)
+graph export figure3a_BCH_omission.pdf, replace 
 
 
 
@@ -91,9 +91,16 @@ histogram t if t <= 10 & year==2015 , title("2015") saving(temp1, replace) width
 histogram t if t <= 10 & year==2018 , title("2018") saving(temp2, replace) width(0.1) start(0) fcolor(gs10) lcolor(gs10) kdensity kdenopts(width(0.1)) xtitle(z-statistic) xline(1.65 1.96 2.58, lwidth(thin)) xlabel(0(1)10) legend(off) scheme(s1mono)
 
 graph combine temp1.gph temp2.gph , ycommon scheme(s1mono) xcommon  xsize(4) ysize(1.5)
-graph export figure3b_BCH_omission.png, replace width(1000)
+graph export figure3b_BCH_omission.pdf, replace 
 
-*** figure 4
+*** figure 4 combined with the t density scaled such that area under the curve is equal to one - but note that the curve is not fully visible (only for t < 10). We scale the empirical densities accordingly by considering the t>10 that are not included in the the density estimator: we scale the observed density by the share of observations with t<10
+
+* read in the data
+cd "C:\Users\ppuetz\Desktop\sciebo\methods_matter_replication\Submission AER\revision\comment_methods_matter\replication_repo_methods_matter_comment\Data\"
+capture use "MM_new.dta", clear 
+
+* determine folder to store results
+cd "C:\Users\ppuetz\Desktop\sciebo\methods_matter_replication\Submission AER\revision\comment_methods_matter\replication_repo_methods_matter_comment\Results\"
 
 capture drop x
 gen x = _n / 100
@@ -119,18 +126,48 @@ if "`method'"=="RDD" {
 	local np = 1.51
 }
 
-capture drop pdf_t
+capture drop pdf_t F_0 pdf_t_scaled
 gen pdf_t = ntden(`df',`np',x)
-label var pdf_t "t~(`df',`np')"
+* calculate probability mass left of zero
+gen F_0 = nt(`df',`np',0)
+* scale non-central t distribution accordingly
+gen pdf_t_scaled = pdf_t/(1-F_0)
+** scale observed density
+* save calculated densities for the kernel estimator (with t <10 only)
+kdensity t if method=="`method'" & t<10, generate (`method'_x `method'_y) n(1000)
+* calculate share of observations smaller than 10
+capture drop sm_10 share_sm_10
+gen sm_10 = 0 if method=="`method'"
+replace sm_10 = 1 if t < 10 & method=="`method'"
+sum sm_10
+return list
+gen share_sm_10 = r(mean)
+* scale calculated densities accordingly
+replace `method'_y = `method'_y*share_sm_10
+** same for kernel estimator for omission approach
+* save calculated densities for the kernel estimator (with t <10 only)
+kdensity t if method=="`method'" & t<10 & keep_obs==1, generate (`method'_x_sm_37 `method'_y_sm_37) n(1000)
+* calculate share of observations smaller than 10
+capture drop sm_10_sm_37 share_sm_10_sm_37
+gen sm_10_sm_37 = 0 if method=="`method'" & keep_obs==1
+replace sm_10_sm_37 = 1 if t < 10 & method=="`method'" & keep_obs==1
+sum sm_10_sm_37
+return list
+gen share_sm_10_sm_37 = r(mean)
+* scale calculated densities accordingly
+replace `method'_y_sm_37 = `method'_y_sm_37*share_sm_10_sm_37
 
-twoway 	(line pdf_t x, lpattern(dash) sort) ///
-	(kdensity t if method=="`method'" & t < 10, lcolor(black)) ///
-	, scheme(s1mono) xlabel(0 1.65 "*" 1.96 "**" 2.58 "***" 5 10) xtitle("z-statistic") xline(1.65 1.96 2.58, lwidth(vvthin)) saving(`method',replace) legend(pos(2) ring(0) col(1) lab(1 "t~(`df',`np')") lab(2 "`method'"))
+
+label var pdf_t_scaled "t~(`df',`np')"
+
+twoway 	(line pdf_t_scaled x, lpattern(dash) sort) ///
+	(line `method'_y `method'_x, lcolor(black)) || (line `method'_y_sm_37 `method'_x_sm_37, lcolor(teal)) ///
+	, scheme(s1mono) xlabel(0 1.65 "*" 1.96 "**" 2.58 "***" 5 10) xtitle("z-statistic") xline(1.65 1.96 2.58, lwidth(vvthin)) saving(`method',replace) legend(pos(2) ring(0) col(1) lab(1 "t~(`df',`np')") lab(2 "`method' (BCH)") lab(3 "`method' (adjusted)"))
 
 }
 
 graph combine DID.gph IV.gph RCT.gph RDD.gph, ycommon scheme(s1mono)
-graph export figure4_BCH_omission.png, replace width(2000)
+graph export figure4_BCH_omission.pdf, replace 
 
 capture erase DID.gph 
 capture erase IV.gph 
@@ -138,12 +175,14 @@ capture erase RCT.gph
 capture erase RDD.gph 
 
 
-*** figure 5a
 
+*** figure 5a
+* drop obs with small significand
+keep if keep_obs==1
 capture destring fstat, replace force
 
 histogram fstat if fstat <= 50 , title() width(2) start(0) fcolor(gs10) lcolor(gs10) kdensity kdenopts() xtitle(F-Statistic) xline(10, lwidth(thin)) xlabel(0 10 20 30 40 50) legend(off) scheme(s1mono)
-graph export figure5a_BCH_omission.png, replace width(1000)
+graph export figure5a_BCH_omission.pdf, replace 
 
 *** figure 5b
 
@@ -153,8 +192,8 @@ histogram t if t <= 10 & method=="IV" & fstat< 30 , title("F less than 30") savi
 
 histogram t if t <= 10 & method=="IV" & fstat>= 30 , title("F greater than or equal to 30") saving(temp2, replace) width(0.1) start(0) fcolor(gs10) lcolor(gs10) kdensity kdenopts(width(0.1)) xtitle(z-statistic) xline(1.65 1.96 2.58, lwidth(thin)) xlabel(0 1 1.65 "*" 1.96 "**" 2.58 "***" 3 4 5 6 7 8 9 10) legend(off) scheme(s1mono)
 
-graph combine temp1.gph temp2.gph , ycommon scheme(s1mono) xcommon xsize(2) ysize(1) caption()
-graph export figure5b_BCH_omission.png, replace  width(1000)
+graph combine temp1.gph temp2.gph , ycommon scheme(s1mono) xcommon xsize(4) ysize(1.5) caption()
+graph export figure5b_BCH_omission.pdf, replace 
 
 *** figure 6
 
@@ -173,4 +212,4 @@ histogram t if t <= 10 & WP==0, title("Published") saving(temp1, replace) width(
 histogram t if t <= 10 & WP==., title("Working Paper") saving(temp2, replace) width(0.1) start(0) fcolor(gs10) lcolor(gs10) kdensity kdenopts(width(0.1)) xtitle(z-statistic) xline(1.65 1.96 2.58, lwidth(thin)) xlabel(0 1 1.65 "*" 1.96 "**" 2.58 "***" 3 4 5 6 7 8 9 10) legend(off) scheme(s1mono)
 
 graph combine temp1.gph temp2.gph , ycommon scheme(s1mono) xcommon  xsize(4) ysize(1.5)
-graph export figure6_BCH_omission.png, replace width(1000)
+graph export figure6_BCH_omission.pdf, replace 
