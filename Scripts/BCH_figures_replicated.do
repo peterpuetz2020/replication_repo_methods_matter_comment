@@ -15,17 +15,19 @@ cd "C:\Users\ppuetz\Desktop\sciebo\methods_matter_replication\Submission AER\rev
 keep if keep_obs==1
 
 *** BCH figure 1a
-histogram t if t <= 10 , title() width(0.1) start(0) fcolor(gs10) lcolor(gs10) kdensity kdenopts(width(0.1)) xtitle(z-statistic) xline(1.65 1.96 2.58, lwidth(thin)) xlabel(0 1 1.65 "*" 1.96 "**" 2.58 "***" 3 4 5 6 7 8 9 10) legend(off) scheme(s1mono)
+histogram t if t <= 10 , saving(temp1, replace) title() width(0.1) start(0) fcolor(gs10) lcolor(gs10) kdensity kdenopts(width(0.1)) xtitle(z-statistic) xline(1.65 1.96 2.58, lwidth(thin)) xlabel(0 1 1.65 "*" 1.96 "**" 2.58 "***" 3 4 5 6 7 8 9 10) legend(off) scheme(s1mono)
 
 graph export figure1a_BCH_omission.pdf, replace 
+graph export figure1a_BCH_omission.png, replace width(1000)
+
 
 *** BCH figure 1b
 
-histogram t if t <= 10 & top5==1 , title("Top 5") saving(temp1, replace) width(0.1) start(0) fcolor(gs10) lcolor(gs10) kdensity kdenopts(width(0.1)) xtitle(z-statistic) xline(1.65 1.96 2.58, lwidth(thin)) xlabel(0(1)10) legend(off) scheme(s1mono)
-histogram t if t <= 10 & top5==0 , title("Non-Top 5") saving(temp2, replace) width(0.1) start(0) fcolor(gs10) lcolor(gs10) kdensity kdenopts(width(0.1)) xtitle(z-statistic) xline(1.65 1.96 2.58, lwidth(thin)) xlabel(0(1)10) legend(off) scheme(s1mono)
+histogram t if t <= 10 & top5==1 , title("Top 5") saving(temp2, replace) width(0.1) start(0) fcolor(gs10) lcolor(gs10) kdensity kdenopts(width(0.1)) xtitle(z-statistic) xline(1.65 1.96 2.58, lwidth(thin)) xlabel(0(1)10) legend(off) scheme(s1mono)
+histogram t if t <= 10 & top5==0 , title("Non-Top 5") saving(temp3, replace) width(0.1) start(0) fcolor(gs10) lcolor(gs10) kdensity kdenopts(width(0.1)) xtitle(z-statistic) xline(1.65 1.96 2.58, lwidth(thin)) xlabel(0(1)10) legend(off) scheme(s1mono)
 
-graph combine temp1.gph temp2.gph , ycommon scheme(s1mono) xcommon  xsize(4) ysize(1.5)
-graph export figure1b_BCH_omission.pdf, replace 
+graph combine temp1.gph temp2.gph, ycommon scheme(s1mono) xcommon  xsize(4) ysize(1.5)
+graph export figure1b_BCH_omission.png, replace width(1000)
 
 *** BCH figure 2
 
@@ -69,8 +71,7 @@ replace top3 = 1 if strpos(journal_name,"American Economic Review")
 histogram t if t <= 10 & year<2015 & top3==1 , title("2005-2011") saving(temp1, replace) width(0.1) start(0) fcolor(gs10) lcolor(gs10) kdensity kdenopts(width(0.1)) xtitle(z-statistic) xline(1.65 1.96 2.58, lwidth(thin)) xlabel(0(1)10) legend(off) scheme(s1mono)
 histogram t if t <= 10 & year>=2015 & top3==1 , title("2015 & 2018") saving(temp2, replace) width(0.1) start(0) fcolor(gs10) lcolor(gs10) kdensity kdenopts(width(0.1)) xtitle(z-statistic) xline(1.65 1.96 2.58, lwidth(thin)) xlabel(0(1)10) legend(off) scheme(s1mono)
 
-graph combine temp1.gph temp2.gph, ycommon scheme(s1mono) xcommon xsize(4) ysize(1.5)
-graph export figure3a_BCH_omission.pdf, replace 
+
 
 
 
@@ -87,11 +88,14 @@ cd "C:\Users\ppuetz\Desktop\sciebo\methods_matter_replication\Submission AER\rev
 * drop obs with small significand
 keep if keep_obs==1
 
-histogram t if t <= 10 & year==2015 , title("2015") saving(temp1, replace) width(0.1) start(0) fcolor(gs10) lcolor(gs10) kdensity kdenopts(width(0.1)) xtitle(z-statistic) xline(1.65 1.96 2.58, lwidth(thin)) xlabel(0(1)10) legend(off) scheme(s1mono)
-histogram t if t <= 10 & year==2018 , title("2018") saving(temp2, replace) width(0.1) start(0) fcolor(gs10) lcolor(gs10) kdensity kdenopts(width(0.1)) xtitle(z-statistic) xline(1.65 1.96 2.58, lwidth(thin)) xlabel(0(1)10) legend(off) scheme(s1mono)
+histogram t if t <= 10 & year==2015 , title("2015") saving(temp3, replace) width(0.1) start(0) fcolor(gs10) lcolor(gs10) kdensity kdenopts(width(0.1)) xtitle(z-statistic) xline(1.65 1.96 2.58, lwidth(thin)) xlabel(0(1)10) legend(off) scheme(s1mono)
+histogram t if t <= 10 & year==2018 , title("2018") saving(temp4, replace) width(0.1) start(0) fcolor(gs10) lcolor(gs10) kdensity kdenopts(width(0.1)) xtitle(z-statistic) xline(1.65 1.96 2.58, lwidth(thin)) xlabel(0(1)10) legend(off) scheme(s1mono)
 
-graph combine temp1.gph temp2.gph , ycommon scheme(s1mono) xcommon  xsize(4) ysize(1.5)
-graph export figure3b_BCH_omission.pdf, replace 
+graph combine temp1.gph temp2.gph temp3.gph temp4.gph, ycommon scheme(s1mono) xcommon xsize(4) ysize(3)
+graph export figure3_BCH_omission.pdf, replace 
+
+
+
 
 *** figure 4 combined with the t density scaled such that area under the curve is equal to one - but note that the curve is not fully visible (only for t < 10). We scale the empirical densities accordingly by considering the t>10 that are not included in the the density estimator: we scale the observed density by the share of observations with t<10
 
@@ -204,7 +208,7 @@ capture use "MM Data with WP ready.dta", clear
 * determine folder to store results
 cd "C:\Users\ppuetz\Desktop\sciebo\methods_matter_replication\Submission AER\revision\comment_methods_matter\replication_repo_methods_matter_comment\Results\"
 
-*** caliper tables after applying omission approach
+
 * drop obs with small significand
 keep if keep_obs==1
 

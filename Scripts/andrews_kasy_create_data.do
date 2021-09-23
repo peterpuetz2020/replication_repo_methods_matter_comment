@@ -1,11 +1,8 @@
-*** create results for amount of distortion (following Andrews & Kasy 2019) after applying omission approach
-
-* we create csv's here of our data 
-* ready to be plugged into a readily avilable app at Maximilian Kasy's (of Andrews & Kasy 2019) website or in our R script andrews_kasy.R
-clear all
+clear
 set more off
+
 * read in the data
-cd "...\Data\"
+cd "C:\Users\ppuetz\Desktop\sciebo\methods_matter_replication\Submission AER\revision\comment_methods_matter\replication_repo_methods_matter_comment\Data"
 capture use "MM_new.dta", clear 
 
 
@@ -18,10 +15,12 @@ foreach method of local methods{
 preserve
 drop if mu ==.
 drop if sigma ==.
-drop if sigma <= 0
+drop if sigma<= 0
 keep if method=="`method'" 
-drop if abs(t)>100
-keep mu sigma
+drop if abs(t)>10
+replace mu = abs(mu)
+keep mu sigma 
 export delimited using "`method'.csv", novarnames replace
 restore
 }
+** and these are put into AK website
