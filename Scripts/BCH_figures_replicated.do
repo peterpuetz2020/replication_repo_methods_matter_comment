@@ -15,23 +15,29 @@ cd "C:\Users\ppuetz\Desktop\sciebo\methods_matter_replication\Submission AER\rev
 keep if keep_obs==1
 
 *** BCH figure 1a
-histogram t if t <= 10 , saving(temp1, replace) title() width(0.1) start(0) fcolor(gs10) lcolor(gs10) kdensity kdenopts(width(0.1)) xtitle(z-statistic) xline(1.65 1.96 2.58, lwidth(thin)) xlabel(0 1 1.65 "*" 1.96 "**" 2.58 "***" 3 4 5 6 7 8 9 10) legend(off) scheme(s1mono)
-
+histogram t if t <= 10 , saving(temp1, replace) title() width(0.1) start(0) fcolor(gs10) lcolor(gs10) kdensity kdenopts(width(0.1)) xtitle(z-statistic) xline(1.65 1.96 2.58, lwidth(thin)) xlabel(0 1 1.65 "*" 1.96 "**" 2.58 "***" 3 4 5 6 7 8 9 10) legend(off) scheme(s1mono) 
 graph export figure1a_BCH_omission.pdf, replace 
 graph export figure1a_BCH_omission.png, replace width(1000)
-
 
 *** BCH figure 1b
 
 histogram t if t <= 10 & top5==1 , title("Top 5") saving(temp2, replace) width(0.1) start(0) fcolor(gs10) lcolor(gs10) kdensity kdenopts(width(0.1)) xtitle(z-statistic) xline(1.65 1.96 2.58, lwidth(thin)) xlabel(0(1)10) legend(off) scheme(s1mono)
-histogram t if t <= 10 & top5==0 , title("Non-Top 5") saving(temp3, replace) width(0.1) start(0) fcolor(gs10) lcolor(gs10) kdensity kdenopts(width(0.1)) xtitle(z-statistic) xline(1.65 1.96 2.58, lwidth(thin)) xlabel(0(1)10) legend(off) scheme(s1mono)
+graph export figure1b_BCH_omission.pdf, replace
 
-graph combine temp1.gph temp2.gph, ycommon scheme(s1mono) xcommon  xsize(4) ysize(1.5)
-graph export figure1b_BCH_omission.png, replace width(1000)
+histogram t if t <= 10 & top5==0 , title("Non-Top 5") saving(temp3, replace) width(0.1) start(0) fcolor(gs10) lcolor(gs10) kdensity kdenopts(width(0.1)) xtitle(z-statistic) xline(1.65 1.96 2.58, lwidth(thin)) xlabel(0(1)10) legend(off) scheme(s1mono)
+graph export figure1c_BCH_omission.pdf, replace
+
+
+
+
+
+
+
+
 
 *** BCH figure 2
 
-histogram t if t <= 10 & method=="DID"  , title("DID") saving(temp1, replace) width(0.1) start(0) fcolor(gs10) lcolor(gs10) kdensity kdenopts(width(0.1)) xtitle(z-statistic) xline(1.65 1.96 2.58, lwidth(thin)) xlabel(0(1)10) legend(off) scheme(s1mono)
+histogram t if t <= 10 & method=="DID"  , title("DID") saving(temp1, replace) width(0.1) start(0) fcolor(gs10) lcolor(gs10) kdensity kdenopts(width(0.1)) xtitle(z-statistic) xline(1.65 1.96 2.58, lwidth(thin)) xlabel(0(1)10) legend(off) scheme(s1mono) 
 histogram t if t <= 10 & method=="IV" , title("IV") saving(temp2, replace) width(0.1) start(0) fcolor(gs10) lcolor(gs10) kdensity kdenopts(width(0.1)) xtitle(z-statistic) xline(1.65 1.96 2.58, lwidth(thin)) xlabel(0(1)10) legend(off) scheme(s1mono)
 histogram t if t <= 10 & method=="RCT" , title("RCT") saving(temp3, replace) width(0.1) start(0) fcolor(gs10) lcolor(gs10) kdensity kdenopts(width(0.1)) xtitle(z-statistic) xline(1.65 1.96 2.58, lwidth(thin)) xlabel(0(1)10) legend(off) scheme(s1mono)
 histogram t if t <= 10 & method=="RDD", title("RDD") saving(temp4, replace) width(0.1) start(0) fcolor(gs10) lcolor(gs10) kdensity kdenopts(width(0.1)) xtitle(z-statistic) xline(1.65 1.96 2.58, lwidth(thin)) xlabel(0(1)10) legend(off) scheme(s1mono)
@@ -170,7 +176,7 @@ twoway 	(line pdf_t_scaled x, lpattern(dash) sort) ///
 
 }
 
-graph combine DID.gph IV.gph RCT.gph RDD.gph, ycommon scheme(s1mono)
+graph combine DID.gph IV.gph RCT.gph RDD.gph, ycommon scheme(s1mono) xcommon xsize(4) ysize(3)
 graph export figure4_BCH_omission.pdf, replace 
 
 capture erase DID.gph 
@@ -193,11 +199,14 @@ graph export figure5a_BCH_omission.pdf, replace
 capture destring fstat, replace force
 
 histogram t if t <= 10 & method=="IV" & fstat< 30 , title("F less than 30") saving(temp1, replace) width(0.1) start(0) fcolor(gs10) lcolor(gs10) kdensity kdenopts(width(0.1)) xtitle(z-statistic) xline(1.65 1.96 2.58, lwidth(thin)) xlabel(0 1 1.65 "*" 1.96 "**" 2.58 "***" 3 4 5 6 7 8 9 10) legend(off) scheme(s1mono)
+graph export figure5b_BCH_omission.pdf, replace 
+
 
 histogram t if t <= 10 & method=="IV" & fstat>= 30 , title("F greater than or equal to 30") saving(temp2, replace) width(0.1) start(0) fcolor(gs10) lcolor(gs10) kdensity kdenopts(width(0.1)) xtitle(z-statistic) xline(1.65 1.96 2.58, lwidth(thin)) xlabel(0 1 1.65 "*" 1.96 "**" 2.58 "***" 3 4 5 6 7 8 9 10) legend(off) scheme(s1mono)
+graph export figure5c_BCH_omission.pdf, replace 
 
-graph combine temp1.gph temp2.gph , ycommon scheme(s1mono) xcommon xsize(4) ysize(1.5) caption()
-graph export figure5b_BCH_omission.pdf, replace 
+*graph combine temp1.gph temp2.gph , ycommon scheme(s1mono) xcommon xsize(8) ysize(3) caption()
+*graph export figure5b_BCH_omission.pdf, replace 
 
 *** figure 6
 
@@ -213,7 +222,9 @@ cd "C:\Users\ppuetz\Desktop\sciebo\methods_matter_replication\Submission AER\rev
 keep if keep_obs==1
 
 histogram t if t <= 10 & WP==0, title("Published") saving(temp1, replace) width(0.1) start(0) fcolor(gs10) lcolor(gs10) kdensity kdenopts(width(0.1)) xtitle(z-statistic) xline(1.65 1.96 2.58, lwidth(thin)) xlabel(0 1 1.65 "*" 1.96 "**" 2.58 "***" 3 4 5 6 7 8 9 10) legend(off) scheme(s1mono)
+graph export figure6a_BCH_omission.pdf, replace 
 histogram t if t <= 10 & WP==., title("Working Paper") saving(temp2, replace) width(0.1) start(0) fcolor(gs10) lcolor(gs10) kdensity kdenopts(width(0.1)) xtitle(z-statistic) xline(1.65 1.96 2.58, lwidth(thin)) xlabel(0 1 1.65 "*" 1.96 "**" 2.58 "***" 3 4 5 6 7 8 9 10) legend(off) scheme(s1mono)
+graph export figure6b_BCH_omission.pdf, replace 
 
-graph combine temp1.gph temp2.gph , ycommon scheme(s1mono) xcommon  xsize(4) ysize(1.5)
-graph export figure6_BCH_omission.pdf, replace 
+*graph combine temp1.gph temp2.gph , ycommon scheme(s1mono) xcommon  xsize(4) ysize(1.5)
+*graph export figure6_BCH_omission.pdf, replace 
