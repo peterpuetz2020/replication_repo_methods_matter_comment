@@ -93,7 +93,7 @@ forval panel = 1(1)1 {
 
 if "`panel'"=="1" {
 	local depvar "sign_10pct"
-	local threshold 1.644854
+	local threshold 1.65
 	local weight1 "pw="
 	local weight2 "aw"
 }
