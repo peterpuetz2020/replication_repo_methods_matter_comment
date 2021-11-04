@@ -23,7 +23,7 @@ If you do not use an R project, you have to set your working directory at the be
 `study.windows.with.bch.data()`
 
 4. Source "join_star_wars.R" to create data for comparing distribution of z-statistics over time (needed for Figure 5 in our comment, Figure 3 in BCH).\
-`source("Scripts/join_star_wars.R")`\
+`source("Scripts/join_star_wars.R")`
 
 5. Source "ak_make_csv.R" and run the function "make.all.ak.csv()" to create data for Andrews and Kasy approach. Then source "ak_table.R" and run the function "make.ak.tables" to create the statistics for the Andrews and Kasy method which then be summarized to tables (including our Table 3), see below. \
 `source("Scripts/ak_make_csv.R")`\
