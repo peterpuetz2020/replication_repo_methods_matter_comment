@@ -24,46 +24,75 @@ df.big = bind_rows(df.rep, df.omit, df.unif)
 
 z.max = 10; bw = 0.15
 
-make.excess.plot = function(type="Omit") {
-  z.min = 0; z.max = 7
+# Make sure empirical densities are computed on a sufficiently large range
+make.excess.plot = function(type="Omit", normalize=FALSE, left.bias=FALSE) {
+  restorepoint::restore.point("make.excess.plot")
+  z.min = 0; z.max = 10
   z.seq = seq(z.min, z.max, by=0.01)
-  
   t.dens = bind_rows(
-    tibble(method="DID", lab="DID  t(2,1.81)",z=z.seq, t.dens = dt(z.seq, 2, 1.81)),
-    tibble(method="IV",lab="IV  t(2,1.65)", z=z.seq, t.dens = dt(z.seq, 2, 1.65)),
-    tibble(method="RDD",lab="RDD  t(2,1.51)", z=z.seq, t.dens = dt(z.seq, 2, 1.51)),
-    tibble(method="RCT",lab="RCT  t(2,1.16)",z=z.seq, t.dens = dt(z.seq, 2, 1.16 )),
+    tibble(method="DID", lab="DID  t(2,1.81)",z=z.seq, t.dens = dt(z.seq, 2, 1.81) / (1-pt(0,2,1.81))^normalize ),
+    tibble(method="IV",lab="IV  t(2,1.65)", z=z.seq, t.dens = dt(z.seq, 2, 1.65) / (1-pt(0,2,1.65))^normalize ),
+    tibble(method="RDD",lab="RDD  t(2,1.51)", z=z.seq, t.dens = dt(z.seq, 2, 1.51) / (1-pt(0,2,1.51))^normalize ),
+    tibble(method="RCT",lab="RCT  t(2,1.16)",z=z.seq, t.dens = dt(z.seq, 2, 1.16 ) / (1-pt(0,2,1.16))^normalize),
   )
   lab.df = select(t.dens, method, lab) %>% unique()
   
-  #ggplot(t.dens, aes(x=z, y=t.dens)) + geom_line(color="blue") + facet_wrap(~method)
-  t = type
-  no.m = "ALL"
-  df.adj = filter(df.big, type==t, !method %in% no.m)    
-  df.un = filter(df.rep, !method %in% no.m)
+  m = "IV"; t="Omit"
+  z.to = z.max
+  f.emp.dens = function(m, t=type)  {
+    rows = df.big$method == m & df.big$type==t
+    z.emp = df.big[rows,"z"] %>% na.omit()
+    share.above = mean(z.emp > z.to)
+    z.emp = z.emp[z.emp <= z.to]
+    if (!left.bias) {
+      emp.dens = absz.density(z.emp, at=z.seq, bw=0.3)
+      tibble(method=m, type=t, z = z.seq, emp.dens = emp.dens*(1-share.above), share.above = share.above)
+    } else {
+      
+      dens = density(z.emp, from=0, to=z.to,n = 1024, bw=0.3,kernel = "epanechnikov")
+      # We ensure that total area under density
+      # on range from 0 to infinity is 1 
+      w = median(diff(dens$x))
+      tibble(method=m, type=t, z = dens$x, emp.dens = dens$y*(1-share.above)/sum(dens$y*w), share.above = share.above)
+    }
+  }
+  methods = c("DID","IV","RDD","RCT")
+  df.adj = bind_rows(lapply(methods, f.emp.dens, t=type)) %>%
+    left_join(lab.df, by="method")
+  df.un = bind_rows(lapply(methods, f.emp.dens, t="No. adj."))  %>%
+    left_join(lab.df, by="method")
 
-  df.adj = filter(df.adj,is.true(z>=0 & z<=z.max+1))
-  df.un = filter(df.un,is.true(z>=0 & z<=z.max+1))
-  
-  df.adj = left_join(df.adj,lab.df, by="method")
-  df.un = left_join(df.un,lab.df, by="method")
-  
-  
-  ggplot(df.adj, aes(x=z)) +
+  # This code just checks whether densities indeed 
+  # correctly have an area of 1 below the curve
+  w = median(unique(diff(df.adj$z)))
+  df.adj %>%
+    group_by(method, type) %>%
+    summarize(
+      share.above = first(share.above),
+      area = sum(emp.dens)*w + share.above
+    )
+
+  df.un %>%
+    group_by(method, type) %>%
+    summarize(
+      share.above = first(share.above),
+      area = sum(emp.dens)*w + share.above
+    )
+
+    
+  g = ggplot(df.adj, aes(x=z)) +
     scale_x_continuous(limits=c(0,z.max),expand=c(0,0))+
     scale_y_continuous(expand=c(0,0.05))+
-    geom_line(data=t.dens, aes(y=t.dens), color="blue", size=1.1, linetype="longdash") +
-    stat_abszdensity(data=df.un, bw=bw,color="#aaaaaa",size=1) +
-    stat_abszdensity(data=df.adj, bw=bw,color="black",size=0.5) +
-    #geom_density(data = df.un, fill=NA, color="#aaaaaa", kernel="epanechnikov",bw=bw, size=1) +
-    #geom_density(data = df.adj, fill=NA, color="black", kernel="epanechnikov",bw=bw, size=0.5) +
+    geom_line(data=t.dens, aes(y=t.dens), color="blue", size=1, linetype="longdash") +
+    geom_line(data=df.un, aes(y=emp.dens), color="#aaaaaa", size=1) + 
+    geom_line(data=df.adj, aes(y=emp.dens), color="black", size=0.5) +
     theme_bw() +  
     theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) +
-    geom_vline(xintercept = c(2.576, 1.96, 1.645), linetype="dashed", color="#999999") + facet_wrap(~lab) + ylab("Density")
-  
+    geom_vline(xintercept = c(2.576, 1.96, 1.645), linetype="dashed", color="#999999") + facet_wrap(~lab) + ylab("Density") +
+    theme(panel.spacing.x = unit(1.5, "lines"))
+  g
   
 }
-
 
 
 compare.with.rct.plot = function(type="Omit") {
@@ -151,13 +180,19 @@ compare.with.rct.ratio = function(type="Omit") {
 # Excess statistics plots similar to BCH
 
 
-## Adjustment: Ommit
+## Adjustment: Omit
 ```{r "excess_omit"}
 make.excess.plot("Omit")
 ```
 Blue: Assumed t-densities from BCH
 Grey: z-values as reported
 Black: Adjusted z-statistics
+
+### Biased on the LHS
+
+```{r "excess_omit_biased"}
+make.excess.plot("Omit", left.bias = TRUE)
+```
 
 
 ## Reported vs t vs Uniform
@@ -222,6 +257,64 @@ ggplot(df, aes(x=z)) +
   facet_wrap(~type,ncol = 2)
 
 ```
+
+
+## Empirical vs t-distributions assuming symmetric negative and positive z
+
+```{r "symmetric_t_vs_emp"}
+# Make sure empirical densities are computed on a sufficiently large range
+z.min = 0; z.max = 7
+z.seq = seq(0, z.max, by=0.01)
+normalize = FALSE
+left.bias = FALSE
+t.dens = bind_rows(
+    tibble(method="DID", lab="DID  t(2,1.81)",z=z.seq, t.dens = dt(z.seq, 2, 1.81) / (1-pt(0,2,1.81))^normalize ),
+    tibble(method="IV",lab="IV  t(2,1.65)", z=z.seq, t.dens = dt(z.seq, 2, 1.65) / (1-pt(0,2,1.65))^normalize ),
+    tibble(method="RDD",lab="RDD  t(2,1.51)", z=z.seq, t.dens = dt(z.seq, 2, 1.51) / (1-pt(0,2,1.51))^normalize ),
+    tibble(method="RCT",lab="RCT  t(2,1.16)",z=z.seq, t.dens = dt(z.seq, 2, 1.16 ) / (1-pt(0,2,1.16))^normalize),
+)
+lab.df = select(t.dens, method, lab) %>% unique()
+  
+m = "IV"; type="Omit"
+z.to = z.max+10
+f.emp.dens = function(m, t=type)  {
+  rows = df.big$method == m & df.big$type==t
+  z.emp = df.big[rows,"z"] %>% na.omit()
+  share.above = mean(z.emp > z.to)
+  z.emp = z.emp[z.emp <= z.to]
+  emp.dens = absz.density(z.emp, at=z.seq)
+  tibble(method=m, type=t, z = z.seq, emp.dens = emp.dens*(1-share.above))
+}
+methods = c("DID","IV","RDD","RCT")
+df.adj = bind_rows(lapply(methods, f.emp.dens, t=type)) %>%
+  left_join(lab.df, by="method")
+df.un = bind_rows(lapply(methods, f.emp.dens, t="No. adj."))  %>%
+  left_join(lab.df, by="method")
+
+
+t.dens.all = t.dens %>%
+  mutate(z = -z) %>%
+  filter(z != 0) %>%
+  bind_rows(t.dens) %>%
+  mutate(t.dens = t.dens / 2)
+
+emp.dens.all = df.adj %>%
+  mutate(z = -z) %>%
+  filter(z != 0) %>%
+  bind_rows(df.adj) %>%
+  mutate(emp.dens = emp.dens / 2)
+  
+ggplot(emp.dens.all, aes(x=z)) +
+  scale_x_continuous(limits=c(-z.max,z.max),expand=c(0,0))+
+  scale_y_continuous(expand=c(0,0.05))+
+  geom_line(data=t.dens.all, aes(y=t.dens), color="blue", size=1.1) +
+  geom_line(data=emp.dens.all, aes(y=emp.dens), color="black", size=0.5) +
+  theme_bw() +  
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) + facet_wrap(~lab) + ylab("Density")
+
+
+```
+
 
 ### What probability mass is below BCH's t-curves?
 

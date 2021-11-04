@@ -7,6 +7,7 @@ output:
 ---
 
 ```{r setup, include=FALSE}
+#setwd("C:/research/comment_phack/")
 library(dplyr)
 library(ggplot2)
 library(RoundingMatters)
@@ -19,7 +20,8 @@ ggtitle = function(label,...) {ggplot2::ggtitle("")}
 
 dat = readRDS(here("Data","MM_new.Rds"))
 
-wdat = readRDS(here("Data","deround_t_ci.Rds"))
+wdat = readRDS(here("Data","deround_binom_ci.Rds"))
+#wdat = readRDS(here("Data","deround_t_ci.Rds"))
 unique(wdat$mode)
 wdat= wdat %>% mutate_rows(mode=="reported", mode="org") %>%
   mutate(share_signif = theta)
@@ -228,38 +230,51 @@ rct %>% filter(abs(z-1.96)<=0.2) %>% summarize( mean(z >= 1.96))
 ```
 
 
-# Andrews and Kasy: Correlation between mu and sigma
+# Power analyis: size of confidence intervals
 
+```{r results="asis"}
+df = readRDS(here("Data","deround_binom_ci.Rds"))
 
-## Correlation in complete data set
-```{r echo=TRUE}
-df = dat %>%
-  select(mu, sigma,z) %>% filter(is.finite(mu), is.finite(sigma))
-cor(df$mu, df$sigma)
+temp = filter(df, method=="DID")
+h.bch = c(0.05,0.075,0.1,0.2,0.3,0.4,0.5)
 
-cor(df$z, df$sigma,use = "complete.obs")
+ci.df = df %>% 
+  filter(round(h*1000) %in% round(h.bch*1000)) %>%
+  mutate(ci.width = ci.up -ci.low) %>% 
+  group_by(h, method) %>%
+  mutate(ci.inc = ci.width / ci.width[mode=="reported"] -1) %>%
+  filter(mode %in% c("omit", "reported")) %>%
+  group_by(method, mode) %>%
+  summarize(
+    obs = mean(obs),
+    w = mean(ci.width),
+    inc = mean(ci.inc)
+  )
+org.df = filter(ci.df, mode == "reported") %>% select(-inc)
+names(org.df)[3:4] = c("org_obs","org_w")
+om.df = filter(ci.df, mode == "omit")
+names(om.df)[3:4] = c("om_obs","om_w")
 
+dat = org.df %>% left_join(om.df,b="method")
+dat$m = dat$method
+dat$method[1] = "Pooled"
+dat$inc = paste0(round(100*(dat$inc),1),"\\%")
 
-df = filter(df, mu >0 , sigma > 0)
-cor(log(df$mu), log(df$sigma))
-
-#df = filter(df, is.finite(z), is.finite(sigma))
+library(xglue)
+tpl = readLines(here("Tex_templates","tab_power_tpl.tex"))
+res = xglue(tpl, open="<<", close=">>")
+writeLines(res, here("Results", "power_tab.tex"))
+cat(res)
 ```
 
-## Correlation in subset z <= 1.645
-```{r echo=TRUE}
-df = dat %>%
-  select(mu, sigma,z) %>% filter(is.finite(mu), is.finite(sigma), z<=1.645)
-cor(df$mu, df$sigma)
-
-df = filter(df, mu >0 , sigma > 0)
-cor(log(df$mu), log(df$sigma))
-
-cor.test(log(df$mu), log(df$sigma))
-
-summary(lm(log(mu) ~ log(sigma), data=df))
-
-cor(df$sigma, df$z)
-
+# Increases for DID sample for all h
+```{r}
+df %>% 
+  filter(round(h*1000) %in% round(h.bch*1000)) %>%
+  mutate(ci.width = ci.up -ci.low) %>% 
+  group_by(h, method) %>%
+  mutate(ci.inc = ci.width / ci.width[mode=="reported"] -1) %>%
+  filter(mode %in% c("omit","reported"), method=="DID") %>%
+  select(h, ci.width, ci.inc,obs)
 ```
 

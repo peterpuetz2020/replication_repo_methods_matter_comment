@@ -1,0 +1,11 @@
+\begin{tabular}{lllll}
+    & \multicolumn{2}{c}{\begin{tabular}[c]{@{}c@{}}Average width of 95\% CI\end{tabular}} & Average width &  \\
+    & original sample                              & adjusted sample                             &   increase      &  \\
+\hline\hline
+
+#< use dat; group_by m;
+<<method>> & <<format(round(org_w,3),nsmall=3)>> &<<format(round(om_w,3),nsmall=3)>> & <<inc>> \\
+
+#>
+\hline\hline
+\end{tabular}

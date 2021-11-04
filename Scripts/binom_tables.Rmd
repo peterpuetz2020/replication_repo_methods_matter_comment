@@ -19,7 +19,8 @@ dat = dat %>%
   mutate_rows(mode=="omit", mode="Omit") %>%
   mutate_rows(mode=="uniform", mode="Uniform") %>%
   mutate_rows(mode=="zda", mode="ZDA") %>%
-  mutate_rows(mode=="dsr", mode="DSR")
+  mutate_rows(mode=="dsr", mode="DSR") %>%
+  arrange(method)
 
 modes = unique(dat$mode)
 methods = unique(dat$method)
@@ -41,11 +42,12 @@ p.stars = function(p) {
 
 ```
 
-# Binominal tests
+
+# One table per method
 
 ## All data
 
-```{r results="asis"}
+```{r "binom05_alldat", results="asis"}
 dat = filter(all.dat, method=="ALL")
 res = xglue(tpl, open="<<", close=">>")
 writeLines(res, here("Results", "binom_all.tex"))
@@ -55,7 +57,7 @@ res
 
 ## DID
 
-```{r results="asis"}
+```{r "binom05_did", results="asis"}
 dat = filter(all.dat, method=="DID")
 res = xglue(tpl, open="<<", close=">>")
 writeLines(res, here("Results", "binom_did.tex"))
@@ -64,7 +66,7 @@ res
 
 ## IV
 
-```{r results="asis"}
+```{r "binom05_iv", results="asis"}
 dat = filter(all.dat, method=="IV")
 res = xglue(tpl, open="<<", close=">>")
 writeLines(res, here("Results", "binom_iv.tex"))
@@ -74,7 +76,7 @@ res
 
 ## RDD
 
-```{r results="asis"}
+```{r "binom05_rdd", results="asis"}
 dat = filter(all.dat, method=="RDD")
 res = xglue(tpl, open="<<", close=">>")
 writeLines(res, here("Results", "binom_rdd.tex"))
@@ -83,12 +85,13 @@ res
 
 ## RCT
 
-```{r results="asis"}
+```{r "binom05_rct", results="asis"}
 dat = filter(all.dat, method=="RCT")
 res = xglue(tpl, open="<<", close=">>")
 writeLines(res, here("Results", "binom_rct.tex"))
 res
 ```
+
 
 # Tables with the 5 methods next to each other
 
@@ -103,7 +106,7 @@ res
 ```
 
 
-## Derounding mode: Omit
+## 5% omit
 
 ```{r "binom05_omit", results="asis"}
 dat = filter(all.dat, mode=="Omit")
@@ -117,7 +120,7 @@ res
 ```
 
 
-## 10% Derounding mode: Omit
+## 10% omit
 
 ```{r "binom10_omit", results="asis"}
 all.dat = readRDS(here("Data","deround_binom_10percent.Rds"))
@@ -128,10 +131,14 @@ res = xglue(meth.tpl, open="<<", close=">>")
 writeLines(res, here("Results", "binom10_omit.tex"))
 res
 
+res = xglue(meth.nostar.tpl, open="<<", close=">>")
+writeLines(res, here("Results", "binom10_aer_omit.tex"))
+res
+
 ```
 
 
-## 1% Derounding mode: Omit
+## 1%, omit
 
 ```{r "binom01_omit", results="asis"}
 all.dat = readRDS(here("Data","deround_binom_01percent.Rds")) 
@@ -142,4 +149,9 @@ res = xglue(meth.tpl, open="<<", close=">>")
 writeLines(res, here("Results", "binom01_omit.tex"))
 res
 
+res = xglue(meth.nostar.tpl, open="<<", close=">>")
+writeLines(res, here("Results", "binom01_aer_omit.tex"))
+res
+
 ```
+

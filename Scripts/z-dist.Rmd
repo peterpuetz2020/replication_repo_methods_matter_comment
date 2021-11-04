@@ -17,7 +17,7 @@ options(warn=-1)
 methods = unique(dat$method)
 
 df.rep = select(dat, mu, sigma, z, num.deci,s, method, keep.obs) %>% mutate(mode="reported", type="No adj.")
-df.omit = df.rep %>% filter(keep.obs) %>% mutate(mode="omit", type="Ommit")
+df.omit = df.rep %>% filter(keep.obs) %>% mutate(mode="omit", type="Omit")
 df.unif = df.rep %>% mutate(z = deround.z.uniform(mu, sigma,num.deci)) %>% mutate(mode="uniform", type="Uniform derounding")
 
 df.big = bind_rows(df.rep, df.omit, df.unif)
@@ -57,7 +57,7 @@ make.z.plot = function(m, add.org.kernel = FALSE) {
   gg
 }
 
-z.plot.4m = function(add.org.kernel = FALSE, t="Ommit") {
+z.plot.4m = function(add.org.kernel = FALSE, t="Omit") {
 
   df = df.big %>% filter(type==t, method != "ALL")
   df = filter(df,is.true(z<=z.max+1))
@@ -106,7 +106,7 @@ z.plot.comment = function(add.org.kernel = TRUE) {
 
 ```
 
-# All 4 methods with ommited
+# All 4 methods with omited
 
 ```{r "zplot_iv_did"}
 z.max = 6
@@ -117,7 +117,7 @@ z.plot.comment()
 
 ```{r "zplot_omit"}
 z.max = 6
-z.plot.4m(add.org.kernel=TRUE, t="Ommit")
+z.plot.4m(add.org.kernel=TRUE, t="Omit")
 ```
 
 

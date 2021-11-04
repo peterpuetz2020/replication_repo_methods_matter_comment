@@ -28,7 +28,10 @@ study.windows.with.bch.data = function() {
   res.t = bind_rows(lapply(methods, deround.bch, h.seq=h.seq, window.fun=window.t.ci, all.dat=all.dat, repl=100,use.dsr=FALSE, use.zda=FALSE))
   saveRDS(res.t, "Data/deround_t_ci.Rds")
 
-  
+  # Confidence intervals from exact biomial test
+  res.binom.ci = bind_rows(lapply(methods, deround.bch, h.seq=h.seq, window.fun=window.binom.ci, all.dat=all.dat, repl=1,use.dsr=FALSE, use.zda=FALSE))
+  saveRDS(res.binom.ci, "Data/deround_binom_ci.Rds")
+
 }
 
 deround.bch = function(method,all.dat, tag=method, window.fun=window.binom.test, repl=30,z0=1.96,h.seq=c(0.05,0.075,0.1,0.2,0.3,0.4,0.5), use.dsr = TRUE,use.zda=TRUE,common.deci=FALSE,...) {

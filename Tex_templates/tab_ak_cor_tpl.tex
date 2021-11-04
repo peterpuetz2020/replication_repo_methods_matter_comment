@@ -1,0 +1,63 @@
+\def\sym#1{\ifmmode^{#1}\else\(^{#1}\)\fi}
+\begin{tabular}{l*{<<length(methods)>>}{c}}
+\hline\hline
+&
+#< collapse " & "
+ \multicolumn{1}{c}{<<c(methods)>>}
+#>
+\\
+
+\hline
+\hline
+
+Complete sample:\\
+
+Panel A &
+#< collapse " & "
+ <<d("A","new","cor")>>
+#>
+\\
+&
+#< collapse " & "
+ <<d("A","new","ci")>>
+#>
+\\
+
+Panel B &
+#< collapse " & "
+ <<d("B","new","cor")>>
+#>
+\\
+&
+#< collapse " & "
+ <<d("B","new","ci")>>
+#>
+\\
+
+Sample adjusted for coarse rounding:\\
+
+Panel A &
+#< collapse " & "
+ <<d("A","drop","cor")>>
+#>
+\\
+&
+#< collapse " & "
+ <<d("A","drop","ci")>>
+#>
+\\
+
+Panel B &
+#< collapse " & "
+ <<d("B","drop","cor")>>
+#>
+\\
+&
+#< collapse " & "
+ <<d("B","drop","ci")>>
+#>
+\\
+
+\hline\hline
+\end{tabular}
+

@@ -5,8 +5,8 @@ output: pdf_document
 #### Authors: Sebastian Kranz and Peter Pütz
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-knitr::opts_chunk$set(echo = FALSE, error=TRUE, warn=FALSE, cache=FALSE, fig.width=5.5, fig.height=3.2,fig.path = "figures/")
+library(here)
+knitr::opts_chunk$set(echo = FALSE, error=TRUE, warn=FALSE, cache=FALSE, fig.width=5.5, fig.height=3.2,fig.path = here("Results/",""))
 
 ```
 
@@ -29,7 +29,7 @@ n = 1000000
 # with 1 degree of freedom
 z.org = rt(n,1)
 
-# Observations with abs(z) <= 1.9 will be ommited
+# Observations with abs(z) <= 1.9 will be omited
 # with 50% probability due to publication bias
 omit.prob = 0.5
 keep = runif(n) >= omit.prob | abs(z.org) > 1.9

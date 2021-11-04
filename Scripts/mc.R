@@ -8,6 +8,8 @@ run.mc = function() {
     mutate(z = abs(z)) %>%
     filter(z >= 0, z <= 2*1.96)
 
+  mean(org.dat$s <= 37, na.rm=TRUE)
+  
   res = mc.inner(org.dat,true.theta = 0.5, R=100)  
   res
   #n = 30; repl=10
@@ -56,6 +58,9 @@ run.mc = function() {
   
   write.csv(sum, "Results/mc_sum.csv")
   
+  # Analyse results
+  
+  sum = read.csv("Results/mc_sum.csv")
   # Show as in the working paper table
   levels = c("reported", "omit","star.wars","uniform", "zda.true","zda.20","zda.05")
   tab = sum %>%
@@ -64,10 +69,7 @@ run.mc = function() {
     arrange(true.theta, mode) %>%
     select(true.theta, mode, bias.theta, ci.low, ci.up, coverage, rmse)
   
-  
-  library(ggplot2)
-  ggplot(res, aes(theta, fill=mode)) + geom_histogram() + facet_grid(true.theta~mode) + geom_vline(xintercept=true.theta)
-
+ 
 }
 
 # Perform repl runs of the Monte-Carlo simulation

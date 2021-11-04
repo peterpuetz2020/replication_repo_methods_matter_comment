@@ -42,7 +42,7 @@ adapt.MM.data = function() {
   #    since s = 0 < 37
   #    When derounding, sigma will be different from 0
   
-  # 6. Observations that will never be derounded or never ommited:
+  # 6. Observations that will never be derounded or never omited:
   #    no.deround = is.true(report != "s" | is.na(sigma) | is.na(mu)),
   #    keep.obs = is.true(s >= 37 | is.na(sigma) | report != "s")
   

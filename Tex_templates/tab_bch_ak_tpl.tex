@@ -1,0 +1,139 @@
+\def\sym#1{\ifmmode^{#1}\else\(^{#1}\)\fi}
+\begin{tabular}{l*{<<length(methods)>>}{c}}
+\hline\hline
+&
+#< collapse " & "
+ \multicolumn{1}{c}{<<methods>>}
+#>
+\\
+
+&
+#< collapse " & "
+ \multicolumn{1}{c}{(<<1:length(methods)>>)}
+#>
+\\
+
+\hline
+\hline
+
+Panel A \\
+
+$\beta_{[0 < Z < 1.96]}$ &
+#< collapse " & "
+ <<d("A","estimate",1)>>
+#>
+\\
+&
+#< collapse " & "
+ (<<d("A","sd",1)>>)
+#>
+\\
+
+Scale &
+#< collapse " & "
+ <<d("A","estimate",2)>>
+#>
+\\
+&
+#< collapse " & "
+ (<<d("A","sd",2)>>)
+#>
+
+\\
+
+Location &
+#< collapse " & "
+ <<d("A","estimate",3)>>
+#>
+\\
+&
+#< collapse " & "
+ (<<d("A","sd",3)>>)
+#>
+
+\\
+
+Degrees of Freedom &
+#< collapse " & "
+ <<d("A","estimate",4)>>
+#>
+\\
+&
+#< collapse " & "
+ (<<d("A","sd",4)>>)
+#>
+\\
+Panel B \\
+
+$\beta_{[0 < Z < 1.65]}$ &
+#< collapse " & "
+ <<d("B","estimate",1)>>
+#>
+\\
+&
+#< collapse " & "
+ (<<d("B","sd",1)>>)
+#>
+\\
+
+$\beta_{[1.65 < Z < 1.96]}$ &
+#< collapse " & "
+ <<d("B","estimate",2)>>
+#>
+\\
+&
+#< collapse " & "
+ (<<d("B","sd",2)>>)
+#>
+\\
+
+
+$\beta_{[1.96 < Z < 2.33]}$ &
+#< collapse " & "
+ <<d("B","estimate",3)>>
+#>
+\\
+&
+#< collapse " & "
+ (<<d("B","sd",3)>>)
+#>
+\\
+
+Scale &
+#< collapse " & "
+ <<d("B","estimate",4)>>
+#>
+\\
+&
+#< collapse " & "
+ (<<d("B","sd",4)>>)
+#>
+
+\\
+
+Location &
+#< collapse " & "
+ <<d("B","estimate",5)>>
+#>
+\\
+&
+#< collapse " & "
+ (<<d("B","sd",5)>>)
+#>
+
+\\
+
+Degrees of Freedom &
+#< collapse " & "
+ <<d("B","estimate",6)>>
+#>
+\\
+&
+#< collapse " & "
+ (<<d("B","sd",6)>>)
+#>
+\\
+
+\hline\hline
+\end{tabular}
+

@@ -1,4 +1,4 @@
-*** create caliper table after applying omission approach 
+*** create caliper table after applying omission approach for working paper (including stars)
 
 * read in the data
 cd "...\Data\"
@@ -26,37 +26,49 @@ eststo clear
 probit `depvar' DID IV RDD if t>(`threshold'-0.5) & t<(`threshold'+0.5) [`weight1'`weight2'], cluster(journal_article_cluster)
 eststo : margins, dydx(*) post
 estadd local Window "[`threshold'$\pm$0.50]"
+sum `depvar' if t>(`threshold'-0.5) & t<(`threshold'+0.5) & method=="RCT"
+estadd local rct_sign = round(r(mean), 0.01)
 
 probit `depvar' DID IV RDD top5 i.year experience_avg experience_avg_sq share_top_authors share_top_phd i.ireport authored_solo share_female_authors editor_present if t>(`threshold'-0.5) & t<(`threshold'+0.5) [`weight1'`weight2'], cluster(journal_article_cluster)
 eststo : margins, dydx(*) post
 estadd local Window "[`threshold'$\pm$0.50]"
+sum `depvar' if t>(`threshold'-0.5) & t<(`threshold'+0.5) & method=="RCT"
+estadd local rct_sign = round(r(mean), 0.01)
 
 
 probit `depvar' DID IV RDD top5 i.year FINANCE MACRO_GROWTH GEN_INT EXP DEV LABOR PUB URB experience_avg experience_avg_sq share_top_authors share_top_phd i.ireport authored_solo share_female_authors editor_present if t>(`threshold'-0.5) & t<(`threshold'+0.5) [`weight1'`weight2'], cluster(journal_article_cluster)
 eststo : margins, dydx(*) post
 estadd local Window "[`threshold'$\pm$0.50]"
+sum `depvar' if t>(`threshold'-0.5) & t<(`threshold'+0.5) & method=="RCT"
+estadd local rct_sign = round(r(mean), 0.01)
 
 
 probit `depvar' DID IV RDD i.year i.unique_j experience_avg experience_avg_sq share_top_authors share_top_phd i.ireport authored_solo share_female_authors editor_present if t>(`threshold'-0.5) & t<(`threshold'+0.5) [`weight1'`weight2'], cluster(journal_article_cluster)
 eststo : margins, dydx(*) post
 estadd local Window "[`threshold'$\pm$0.50]"
+sum `depvar' if t>(`threshold'-0.5) & t<(`threshold'+0.5) & method=="RCT"
+estadd local rct_sign = round(r(mean), 0.01)
 
 
 probit `depvar' DID IV RDD i.year i.unique_j experience_avg experience_avg_sq share_top_authors share_top_phd i.ireport authored_solo share_female_authors editor_present if t>(`threshold'-0.35) & t<(`threshold'+0.35) [`weight1'`weight2'], cluster(journal_article_cluster)
 eststo : margins, dydx(*) post
 estadd local Window "[`threshold'$\pm$0.35]"
+sum `depvar' if t>(`threshold'-0.35) & t<(`threshold'+0.35) & method=="RCT"
+estadd local rct_sign = round(r(mean), 0.01)
 
 
 probit `depvar' DID IV RDD i.year i.unique_j experience_avg experience_avg_sq share_top_authors share_top_phd i.ireport authored_solo share_female_authors editor_present if t>(`threshold'-0.2) & t<(`threshold'+0.2) [`weight1'`weight2'], cluster(journal_article_cluster)
 eststo : margins, dydx(*) post
 estadd local Window "[`threshold'$\pm$0.20]"
+sum `depvar' if t>(`threshold'-0.2) & t<(`threshold'+0.2) & method=="RCT"
+estadd local rct_sign = round(r(mean), 0.01)
 
 esttab, margin ///
-keep(DID IV RDD top5 2018.year experience_avg experience_avg_sq share_top_authors share_top_phd ) label stats(N Window, fmt(%9.0fc) labels("Observations")) ///
+keep(DID IV RDD top5 2018.year experience_avg experience_avg_sq share_top_authors share_top_phd ) label stats(N Window rct_sign, fmt(%9.0fc) labels("Observations" "Window" "RCT sig rate")) ///
 star(* 0.10 ** 0.05 *** 0.01) 
 
 esttab using caliper_table_`depvar'_wp.tex, margin ///
-keep(DID IV RDD top5 2018.year experience_avg experience_avg_sq share_top_authors share_top_phd) label  stats(N Window, fmt(%9.0fc) labels("Observations")) ///
+keep(DID IV RDD top5 2018.year experience_avg experience_avg_sq share_top_authors share_top_phd) label  stats(N Window rct_sign, fmt(%9.0fc) labels("Observations" "Window" "RCT sig rate")) ///
 mtitles() nomtitles ///
 star(* 0.10 ** 0.05 *** 0.01) ///
  compress se(3) b(3) replace nogaps noomitted ///

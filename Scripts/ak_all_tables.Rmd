@@ -1,0 +1,103 @@
+---
+title: "Replications of Table 5 (AK)"
+output:
+  pdf_document: 
+    keep_tex: yes
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, error=TRUE)
+library(here)
+library(xglue)
+```
+
+# Main Replications
+
+We replicate Table 5 for different data sets. As in BCH, all observations with $z>10$ were dropped for these replications. This RMD file only prints the resulting tables. To perform the computation, source the file `ak_table.R` and then run the function `make.ak.tables()`.
+
+Note that in Panel B the actual 3rd interval used by BCH was from [1.96,2.33], even though [1.96, 2.58] was stated. We replicate based on the actual interval used: [1.96, 2.33].
+
+## Orginal data supplement in BCH AER article
+
+```{r results="asis"}
+res = readLines(here("Results", "tab_bch_ak_aer_10.tex"))
+cat(res)
+```
+
+The table above should be identical to Table 5 in the AER article.
+
+## Updated data without rounding adjustment
+
+```{r results="asis"}
+res = readLines(here("Results", "tab_bch_ak_new_10.tex"))
+cat(res)
+```
+
+
+## Updated data with rounding adjustment
+We drop all observations with $s < 37$.
+
+```{r results="asis"}
+res = readLines(here("Results", "tab_bch_ak_drop_10.tex"))
+cat(res)
+```
+
+# Alternative replications dropping only z > 100
+
+In the published do file by BCH they only drop z > 100 (but that was not the code run to generate the tables in the AER article). We replicate now the 3 tables above for this selection.
+
+Results are still qualitatively similar. By comparing the tables, we see however that the decision to drop z > 100 or z > 10 has a bigger impact on the estimates than our rounding adjustment.
+
+## Orginal data supplement in BCH AER article
+
+```{r results="asis"}
+res = readLines(here("Results", "tab_bch_ak_aer_100.tex"))
+cat(res)
+```
+
+## Updated data without rounding adjustment
+
+```{r results="asis"}
+res = readLines(here("Results", "tab_bch_ak_new_100.tex"))
+cat(res)
+```
+
+
+## Updated data with rounding adjustment 
+
+We drop all observations with $s < 37$.
+
+```{r results="asis"}
+res = readLines(here("Results", "tab_bch_ak_drop_100.tex"))
+cat(res)
+```
+
+
+# AK Specification tests: Correlations
+
+```{r results = "asis"}
+library(xglue)
+
+df = read.csv(here("Data", "ak_cor_sum.csv"))
+fo = function(x) format(round(x,2), nsmall=2)
+dat = df %>% 
+  mutate(
+    ci.low = fo(ci.low),
+    ci.up = fo(ci.up),
+    cor = fo(cor),
+    ci = paste0("[", ci.low, ", ", ci.up,"]")
+  )
+
+methods = c("DID","IV","RCT","RDD")
+d = function(panel, dataset, col) {
+  rows = dat$panel == panel & dat$dataset==dataset
+  dat[[col]][rows]
+}
+
+tpl = readLines(here("Tex_templates","tab_ak_cor_tpl.tex"))
+res = xglue(tpl, open="<<", close=">>")
+writeLines(res, here("Results", "tab_ak_cor.tex"))
+res
+
+```
+

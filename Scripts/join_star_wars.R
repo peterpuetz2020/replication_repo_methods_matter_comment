@@ -41,7 +41,7 @@ sw = sw[, c("year", "journal", "issue", "article_page", "first_author", "coeffic
             "coefficient_num", "standard_deviation",
            "standard_deviation_num", "t", "method", "IV", "DID", "RCT", "RDD", "MULTI")]
 
-# calculate significant
+# calculate significand
 sw = sw %>%
   mutate(
     mu_str = coefficient,
