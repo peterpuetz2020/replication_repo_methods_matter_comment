@@ -4,6 +4,8 @@
 
 compute.ak.cors = function() {
   library(MetaStudies)
+  library(restorepoint)
+  #setwd("~/comment_phack")
   B = 500
   num.cores = 50
   compute.ak.cor(mode="drop_10", panel="A", B=B,  num.cores = num.cores)
@@ -19,10 +21,9 @@ compute.ak.cor = function(mode, panel="A", B=500, num.cores = 10) {
   cat("\n", mode, " panel ", panel)
   cat("\n***************************************\n")
   
-  m = methods[2]
   for (m in methods) {
     cat("\n",m,"\n\n")
-    dat = read.csv(paste0("ak_csv/", m,"_",mode, ".csv"))
+    dat = read.csv(paste0("Data/", m,"_",mode, ".csv"))
     X = dat[,1]
     sigma = dat[,2]
     #ms = metastudies_estimation(X,sigma, cutoffs = c(1.645, 1.96, 2.576), symmetric=TRUE, model="t")
@@ -39,25 +40,25 @@ compute.ak.cor = function(mode, panel="A", B=500, num.cores = 10) {
     res = res %>% select(method, everything())
     file.post = paste0(m,"_", mode, "_",panel,".Rds")
     
-    saveRDS(res,paste0("ak_cor/ak_cor_",file.post))
+    saveRDS(res,paste0("Data/ak_cor_",file.post))
   
     bs.res = bootstrap_specification_tests(X=X, sigma=sigma, cutoffs = cutoffs, B=B, symmetric=TRUE, num.cores = num.cores, model="t")
   
     bs.sum = bs.res$bs.sum
     bs.sum$method = m
     bs.sum = bs.sum %>% select(method, everything())
-    saveRDS(bs.sum,paste0("ak_cor/ak_cor_boot_sum_",file.post))
+    saveRDS(bs.sum,paste0("Data/ak_cor_boot_sum_",file.post))
   
     bs.sim = bs.res$bs.sim
     bs.sim$method = m
     bs.sim = bs.sim %>% select(method, everything())
-    saveRDS(bs.sim,paste0("ak_cor/ak_cor_boot_sim_",file.post))
+    saveRDS(bs.sim,paste0("Data/ak_cor_boot_sim_",file.post))
   }
 }
 
 collect.bootstrap.stats = function() {
   # Collect summary statistics presented in working paper
-  files = list.files("ak_cor",glob2rx("ak_cor_boot_sum*.Rds"),full.names = TRUE) 
+  files = list.files("Data",glob2rx("ak_cor_boot_sum*.Rds"),full.names = TRUE) 
   
   
   file = files[1]
@@ -83,11 +84,11 @@ collect.bootstrap.stats = function() {
       
   
   # Load estimates without bootstrap
-  no.boot = read.csv("ak_cor_noboot.csv")
+  no.boot = read.csv("Data/ak_cor_noboot.csv")
   
   sum.df = left_join(sum.df, no.boot)
   
-  write.csv(sum.df, "ak_cor_sum.csv",row.names = FALSE)
+  write.csv(sum.df, "Data/ak_cor_sum.csv",row.names = FALSE)
   
 }
 
@@ -99,7 +100,7 @@ compute.ak.cors.no.ci = function(datasets = c("new","drop"), t.max = c(10,100), 
   i = 1
   bs = bind_rows(mclapply(1:NROW(grid), mc.cores=num.cores, function(i) {
     g = grid[i,]
-    dat = read.csv(paste0("ak_csv/", g$method,"_",g$dataset,"_",g$t_max, ".csv"))
+    dat = read.csv(paste0("Data/", g$method,"_",g$dataset,"_",g$t_max, ".csv"))
     X = dat[,1]
     sigma = dat[,2]
     
@@ -117,7 +118,7 @@ compute.ak.cors.no.ci = function(datasets = c("new","drop"), t.max = c(10,100), 
     select(res, method, dataset, panel, t_max, trans, mode, cor, beta, r.sqr) %>% filter(mode == "ipv")
   }))
   
-  write.csv(bs, "ak_cor_noboot.csv", row.names = FALSE)
+  write.csv(bs, "Data/ak_cor_noboot.csv", row.names = FALSE)
   
   temp = bs %>% filter(trans == "log")
 }

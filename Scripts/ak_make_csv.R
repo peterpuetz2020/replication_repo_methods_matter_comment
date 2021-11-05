@@ -2,6 +2,7 @@
 
 make.all.ak.csv = function() {
   library(here)
+  library(tidyverse)
   out.dir = here("Data")
 
   dat = rio::import(here("Data","MM_new.Rds"))

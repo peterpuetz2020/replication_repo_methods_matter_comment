@@ -10,8 +10,9 @@ install.packages(c("dplyr",
 options(repos = c(
     skranz = 'https://skranz.r-universe.dev',
     CRAN = 'https://cloud.r-project.org'))
- install.packages(c("xglue",
-                    "dplyrExtras",
-                    "MetaStudies",
-                    "RoundingMatters",
-                    "stringtools"))
+
+install.packages(c("xglue",
+                  "dplyrExtras",
+                  "MetaStudies",
+                  "RoundingMatters",
+                  "stringtools"))
