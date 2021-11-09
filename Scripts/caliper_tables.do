@@ -1,11 +1,11 @@
 *** this script creates caliper tables after applying omission approach using different significant thresholds
 
 * read in the data
-cd "C:\Users\ppuetz\Desktop\sciebo\methods_matter_replication\Submission AER\revision\comment_methods_matter\public\Data"
+cd "..."
 capture use "MM_new.dta", clear 
 
 * determine folder to store results
-cd "C:\Users\ppuetz\Desktop\sciebo\methods_matter_replication\Submission AER\revision\comment_methods_matter\public\Results"
+cd "..."
 
 
 * drop obs with small significand
@@ -79,11 +79,11 @@ nonotes
 * second: 10% threshold
 
 * read in the data
-cd "C:\Users\ppuetz\Desktop\sciebo\methods_matter_replication\Submission AER\revision\comment_methods_matter\public\Data"
+cd "..."
 capture use "MM_new.dta", clear 
 
 * determine folder to store results
-cd "C:\Users\ppuetz\Desktop\sciebo\methods_matter_replication\Submission AER\revision\comment_methods_matter\public\Results"
+cd "..."
 
 
 * drop obs with small significand
@@ -157,11 +157,11 @@ nonotes
 * third: 1% threshold
 
 * read in the data
-cd "C:\Users\ppuetz\Desktop\sciebo\methods_matter_replication\Submission AER\revision\comment_methods_matter\public\Data"
+cd "..."
 capture use "MM_new.dta", clear 
 
 * determine folder to store results
-cd "C:\Users\ppuetz\Desktop\sciebo\methods_matter_replication\Submission AER\revision\comment_methods_matter\public\Results"
+cd "..."
 
 
 * drop obs with small significand
