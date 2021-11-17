@@ -1,6 +1,6 @@
 Please cite as: Kranz, Sebastian and Peter Puetz. 2021. Rounding and other pitfalls
 in meta-studies on p-hacking and publication bias: A comment on Brodeur
-et al. (2020)". SSRN working paper, available at: https://ssrn.com/abstract=3848786.
+et al. (2020). SSRN working paper, available at: https://ssrn.com/abstract=3848786.
 
 ### About this documentation
 This documentation gives an overview of those files included in this repository that are needed to replicate the results of the working paper "Kranz, S. and Pütz. P.: Rounding and other pitfalls in meta-studies on p-hacking and publication bias: A comment on Brodeur et al. (2020)".
