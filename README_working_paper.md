@@ -1,4 +1,4 @@
-Please cite as: Kranz, Sebastian and Peter Puetz. 2021. \Rounding and other pitfalls
+Please cite as: Kranz, Sebastian and Peter Putz. 2021. Rounding and other pitfalls
 in meta-studies on p-hacking and publication bias: A comment on Brodeur
 et al. (2020)". SSRN working paper, available at: https://ssrn.com/abstract=3848786.
 
