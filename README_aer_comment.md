@@ -1,6 +1,7 @@
 ### About this documentation
 This documentation gives an overview of those files included in this repository that are needed to replicate the results of "Kranz, S. and Pütz. P.: Methods Matter: p-Hacking and Publication Bias in Causal Analysis in Economics: Comment" (including the online appendix), aimed for publication in the AER.
 The analyses were conducted using R 4.0.5 and Stata/IC 16.0 (64 bit, Windows). All R and Stata scripts are stored in the folder "Scripts", provided and created datasets are located in the folder "Data", manually created latex templates are stored in the folder "Tex_templates" and results obtained by running the scripts are stored in the folder "Results". 
+All data sets and some Stata code used were provided by Abel Brodeur and are based (but potentially updated) on "Brodeur, Abel, Cook, Nikolai, and Heyes, Anthony. Data and Code for: Methods Matter: P-Hacking and Publication Bias in Causal Analysis in Economics. Nashville, TN: American Economic Association [publisher], 2020. Ann Arbor, MI: Inter-university Consortium for Political and Social Research [distributor], 2020-09-15. https://doi.org/10.3886/E120246V1".
 
 
 ### Manual to replicate the results
