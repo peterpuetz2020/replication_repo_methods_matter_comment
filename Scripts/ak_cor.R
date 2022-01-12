@@ -1,12 +1,18 @@
-# This code computes the correlations used as specification test for 
+# This code computes the correlations used as specification test for
 # Andrews and Kasy
-# Using 50 cores in parallel it takes around half a day to run 
+# Using 50 cores in parallel (on a Linux server) 
+# it takes around half a day to run 
 
 compute.ak.cors = function() {
   library(MetaStudies)
   library(restorepoint)
   #setwd("~/comment_phack")
   B = 500
+  
+  # Note under Windows it you must set num.cores = 1
+  # but then the code may run for two weeks...
+  # So better reduce the number of bootstrap replications B.
+  # Otherwise pick the maximum number of available cores
   num.cores = 50
   compute.ak.cor(mode="drop_10", panel="A", B=B,  num.cores = num.cores)
   compute.ak.cor(mode="new_10", panel="A", B=B,  num.cores = num.cores)
